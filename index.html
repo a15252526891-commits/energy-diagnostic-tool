@@ -1,0 +1,2298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>储能策略诊断工具 V2</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #1890ff, #36cfc9);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            color: #1890ff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1890ff;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .form-item label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        .form-item input, .form-item select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #1890ff;
+            color: white;
+        }
+        .btn-primary:hover { background: #40a9ff; }
+        .btn-success {
+            background: #52c41a;
+            color: white;
+        }
+        .btn-sm {
+            padding: 5px 15px;
+            font-size: 12px;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e8e8e8;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            color: #1890ff;
+            border-bottom-color: #1890ff;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .alert {
+            padding: 12px 16px;
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            color: #096dd9;
+        }
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .input-grid .form-item {
+            margin-bottom: 0;
+        }
+        .input-grid .form-item label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .input-grid .form-item input {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        .granularity-selector {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        .granularity-selector h3 {
+            color: #096dd9;
+            margin-bottom: 12px;
+        }
+        .radio-group {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 12px;
+        }
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .radio-group input[type="radio"] {
+            margin-right: 8px;
+            width: auto;
+        }
+        .upload-zone {
+            border: 2px dashed #d9d9d9;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #fafafa;
+            margin-bottom: 16px;
+        }
+        .upload-zone:hover {
+            border-color: #1890ff;
+        }
+        .score-circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1890ff, #36cfc9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin: 20px auto;
+        }
+        .score-value { font-size: 56px; font-weight: bold; }
+        .score-label { font-size: 16px; margin-top: 8px; }
+        .result-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .result-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .result-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #52c41a;
+        }
+        .result-label {
+            color: #666;
+            margin-top: 8px;
+        }
+        .hidden { display: none !important; }
+        .loading {
+            text-align: center;
+            padding: 60px;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1890ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>储能策略诊断工具 V2</h1>
+        <p>基于MILP算法的智能储能运行策略优化系统</p>
+    </div>
+
+    <div class="container">
+        <!-- 步骤1：基础信息采集 -->
+        <div class="card" id="step1">
+            <h2>步骤一：基础信息采集</h2>
+
+            <!-- 时间粒度选择 -->
+            <div class="granularity-selector">
+                <h3>📅 数据时间粒度</h3>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="timeGranularity" value="daily" checked onchange="onGranularityChange()">
+                        <div>
+                            <div>日级数据</div>
+                            <small style="color:#999">15分钟粒度（96点/天）</small>
+                        </div>
+                    </label>
+                    <label>
+                        <input type="radio" name="timeGranularity" value="monthly" onchange="onGranularityChange()">
+                        <div>
+                            <div>月级数据</div>
+                            <small style="color:#999">15分钟粒度（2880点/月）</small>
+                        </div>
+                    </label>
+                    <label>
+                        <input type="radio" name="timeGranularity" value="yearly" onchange="onGranularityChange()">
+                        <div>
+                            <div>年级数据</div>
+                            <small style="color:#999">15分钟粒度（35040点/年）</small>
+                            <small style="color:#f5222d;display:block">⚠️ 仅支持文件上传</small>
+                        </div>
+                    </label>
+                </div>
+                <div id="granularityDesc" style="color:#666;font-size:13px">
+                    <strong>当前模式：</strong>日级数据 - 典型日24小时，15分钟粒度共96个数据点
+                </div>
+            </div>
+
+            <!-- 输入方式切换 -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab(this, 'manualInput')">手动输入</div>
+                <div class="tab" onclick="switchTab(this, 'fileUpload')">文件上传</div>
+            </div>
+
+            <!-- 手动输入 -->
+            <div id="manualInput" class="tab-content active">
+                <div class="alert" id="manualAlert">
+                    💡 手动输入典型日24小时功率数据（15分钟粒度，共96个数据点）
+                </div>
+
+                <!-- 储能参数 -->
+                <h3 style="margin:20px 0 15px;color:#333">储能系统参数</h3>
+                <div class="form-row">
+                    <div class="form-item">
+                        <label>额定容量 (kWh)</label>
+                        <input type="number" id="capacity" value="2000" min="100">
+                    </div>
+                    <div class="form-item">
+                        <label>额定功率 (kW)</label>
+                        <input type="number" id="power" value="500" min="50">
+                    </div>
+                    <div class="form-item">
+                        <label>储能投资金额 (万元)</label>
+                        <input type="number" id="essInvestment" value="150" min="10" placeholder="请输入储能投资金额">
+                    </div>
+                </div>
+
+                <!-- 光伏参数 -->
+                <h3 style="margin:20px 0 15px;color:#333">光伏系统参数</h3>
+                <div class="form-row">
+                    <div class="form-item">
+                        <label>光伏装机容量 (kW)</label>
+                        <input type="number" id="pvCapacity" value="300" min="0" placeholder="请输入光伏装机容量">
+                    </div>
+                </div>
+
+                <!-- 变压器与基本电费参数 -->
+                <h3 style="margin:20px 0 15px;color:#333">⚡ 变压器与基本电费信息</h3>
+                <div style="background:#f0f5ff;border:1px solid #adc6ff;border-radius:8px;padding:20px;margin-bottom:20px">
+                    <div class="form-row">
+                        <div class="form-item">
+                            <label>变压器总容量 (kVA) <span style="color:#f5222d">*</span></label>
+                            <input type="number" id="transformerCapacity" value="1000" min="50" placeholder="请输入变压器容量">
+                            <small style="color:#666;font-size:11px">用于计算按容量计费的基本电费</small>
+                        </div>
+                        <div class="form-item">
+                            <label>当前计费方式</label>
+                            <select id="billingMode" onchange="onBillingModeChange()" style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:4px">
+                                <option value="capacity">按变压器容量</option>
+                                <option value="demand" selected>按实际最大需量</option>
+                            </select>
+                        </div>
+                        <div class="form-item" id="maxDemandItem">
+                            <label>历史月最大需量 (kW)</label>
+                            <input type="number" id="maxDemand" value="800" min="50" placeholder="请输入最大需量">
+                            <small style="color:#666;font-size:11px">储能优化可降低此值，节省基本电费</small>
+                        </div>
+                    </div>
+                    <div id="billingHint" style="margin-top:10px;padding:10px;background:#e6f7ff;border-radius:4px;font-size:13px;color:#096dd9">
+                        💡 <strong>按需量计费</strong>：储能可在负荷高峰时放电，降低最大需量，节省基本电费
+                    </div>
+                </div>
+
+                <!-- 负荷数据 -->
+                <h3 style="margin:20px 0 15px;color:#333">
+                    市电负荷功率数据 (kW)
+                    <button class="btn btn-primary btn-sm" onclick="generateLoadData()" style="margin-left:10px">生成典型曲线</button>
+                </h3>
+                <div class="input-grid" id="loadInputs"></div>
+
+                <!-- 光伏数据 -->
+                <h3 style="margin:20px 0 15px;color:#333">
+                    光伏出力功率数据 (kW)
+                    <button class="btn btn-primary btn-sm" onclick="generatePVData()" style="margin-left:10px">生成典型曲线</button>
+                </h3>
+                <div class="input-grid" id="pvInputs"></div>
+
+                <!-- 电价数据 -->
+                <h3 style="margin:20px 0 15px;color:#333">
+                    分时电价数据 (元/kWh)
+                    <button class="btn btn-primary btn-sm" onclick="generatePriceData()" style="margin-left:10px">生成典型电价</button>
+                </h3>
+
+                <!-- 手动输入区域电价库选择 -->
+                <div style="background:#fff7e6;border:1px solid #ffd591;border-radius:8px;padding:16px;margin-bottom:20px">
+                    <p style="color:#666;margin-bottom:12px;font-size:13px">💡 快速填充：选择省份和用电类型，自动填充分时电价到下方输入框</p>
+                    <div class="form-row" style="margin-bottom:12px">
+                        <div class="form-item">
+                            <label style="font-size:12px">省份</label>
+                            <select id="manualProvince" onchange="onManualProvinceChange()" style="width:100%;padding:6px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px">
+                                <option value="">请选择</option>
+                                <option value="guangdong">广东省</option>
+                                <option value="jiangsu">江苏省</option>
+                                <option value="zhejiang">浙江省</option>
+                                <option value="shandong">山东省</option>
+                                <option value="henan">河南省</option>
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <label style="font-size:12px">用电类型</label>
+                            <select id="manualUserType" onchange="onManualUserTypeChange()" style="width:100%;padding:6px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px">
+                                <option value="">请选择</option>
+                                <option value="large_industrial">大工业</option>
+                                <option value="general_commercial">一般工商业</option>
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <label style="font-size:12px">电压等级</label>
+                            <select id="manualVoltageLevel" onchange="onManualVoltageChange()" style="width:100%;padding:6px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px">
+                                <option value="">请选择</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center">
+                        <button class="btn btn-sm" id="applyManualPriceBtn" onclick="applyManualPriceTemplate()" style="background:#1890ff;color:white;border:none;padding:6px 16px" disabled>✓ 应用到输入框</button>
+                        <span id="manualPricePreview" style="font-size:12px;color:#666"></span>
+                    </div>
+                </div>
+
+                <div class="input-grid" id="priceInputs"></div>
+            </div>
+
+            <!-- 文件上传 -->
+            <div id="fileUpload" class="tab-content">
+                <div class="alert">
+                    📁 支持上传 Excel (.xlsx) 或 CSV 格式的数据文件，每个数据类型可单独上传
+                </div>
+
+                <!-- 负荷数据上传 -->
+                <h3 style="margin:20px 0 15px;color:#333">市电负荷功率数据 (kW)</h3>
+                <div class="upload-zone" style="margin-bottom:20px">
+                    <p style="color:#666;margin-bottom:16px">上传负荷数据文件（timestamp, load_kw）</p>
+                    <div style="display:flex;gap:10px;justify-content:center">
+                        <input type="file" id="loadFile" accept=".csv,.xlsx" style="display:none" onchange="handleFileUpload(this, 'load')">
+                        <button class="btn btn-primary" onclick="document.getElementById('loadFile').click()">选择负荷文件</button>
+                        <button class="btn btn-sm" style="background:#f0f0f0;color:#666;border:1px solid #d9d9d9" onclick="downloadTemplate('load')">📥 下载模板</button>
+                    </div>
+                    <p style="color:#999;margin-top:16px;font-size:12px" id="loadFileHint">
+                        文件需包含 timestamp, load_kw 列
+                    </p>
+                </div>
+
+                <!-- 光伏数据上传 -->
+                <h3 style="margin:20px 0 15px;color:#333">光伏出力功率数据 (kW)</h3>
+                <div class="upload-zone" style="margin-bottom:20px">
+                    <p style="color:#666;margin-bottom:16px">上传光伏数据文件（timestamp, pv_kw）</p>
+                    <div style="display:flex;gap:10px;justify-content:center">
+                        <input type="file" id="pvFile" accept=".csv,.xlsx" style="display:none" onchange="handleFileUpload(this, 'pv')">
+                        <button class="btn btn-primary" onclick="document.getElementById('pvFile').click()">选择光伏文件</button>
+                        <button class="btn btn-sm" style="background:#f0f0f0;color:#666;border:1px solid #d9d9d9" onclick="downloadTemplate('pv')">📥 下载模板</button>
+                    </div>
+                    <p style="color:#999;margin-top:16px;font-size:12px" id="pvFileHint">
+                        文件需包含 timestamp, pv_kw 列
+                    </p>
+                </div>
+
+                <!-- 电价数据选择 -->
+                <h3 style="margin:20px 0 15px;color:#333">⚡ 分时电价数据 (元/kWh)</h3>
+                <div class="upload-zone" style="margin-bottom:20px;background:#fff7e6;border-color:#ffd591">
+                    <p style="color:#666;margin-bottom:16px">选择省份和用电类型自动生成电价，或上传自定义电价数据</p>
+
+                    <!-- 省份和用电类型选择 -->
+                    <div style="background:white;border:1px solid #e8e8e8;border-radius:8px;padding:20px;margin-bottom:20px">
+                        <div class="form-row" style="margin-bottom:15px">
+                            <div class="form-item">
+                                <label>所在省份 <span style="color:#999;font-size:12px">(自动生成电价)</span></label>
+                                <select id="province" onchange="onProvinceChange()" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px">
+                                    <option value="">请选择省份</option>
+                                    <option value="guangdong">广东省</option>
+                                    <option value="jiangsu">江苏省</option>
+                                    <option value="zhejiang">浙江省</option>
+                                    <option value="shandong">山东省</option>
+                                    <option value="henan">河南省</option>
+                                </select>
+                            </div>
+                            <div class="form-item">
+                                <label>用电类型</label>
+                                <select id="userType" onchange="onUserTypeChange()" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px">
+                                    <option value="">请选择用电类型</option>
+                                    <option value="large_industrial">大工业用电</option>
+                                    <option value="general_commercial">一般工商业</option>
+                                </select>
+                            </div>
+                            <div class="form-item">
+                                <label>电压等级</label>
+                                <select id="voltageLevel" onchange="updatePricePreview()" style="width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px">
+                                    <option value="">请选择电压等级</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 电价预览 -->
+                        <div id="pricePreview" style="display:none;margin-top:15px;padding:15px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:4px">
+                            <h4 style="color:#52c41a;margin-bottom:10px;font-size:14px">📊 当前选择电价</h4>
+                            <div id="priceTable" style="font-size:13px"></div>
+                            <p style="color:#999;font-size:11px;margin-top:10px">* 数据仅供参考，实际电价以当地电网公司公布为准</p>
+                        </div>
+
+                        <div style="display:flex;gap:10px;justify-content:center;margin-top:15px">
+                            <button class="btn btn-primary" id="usePriceTemplateBtn" onclick="usePriceTemplate()" disabled>✓ 使用系统电价</button>
+                        </div>
+                    </div>
+
+                    <!-- 自定义上传 -->
+                    <div style="border-top:1px dashed #d9d9d9;padding-top:20px;margin-top:20px">
+                        <p style="color:#999;margin-bottom:15px;font-size:13px">或使用自定义电价数据：</p>
+                        <div style="display:flex;gap:10px;justify-content:center">
+                            <input type="file" id="priceFile" accept=".csv,.xlsx" style="display:none" onchange="handleFileUpload(this, 'price')">
+                            <button class="btn btn-sm" style="background:#f0f0f0;color:#666;border:1px solid #d9d9d9" onclick="document.getElementById('priceFile').click()">选择电价文件</button>
+                            <button class="btn btn-sm" style="background:#f0f0f0;color:#666;border:1px solid #d9d9d9" onclick="downloadTemplate('price')">📥 下载模板</button>
+                        </div>
+                        <p style="color:#999;margin-top:16px;font-size:12px" id="priceFileHint">
+                            文件需包含 timestamp, price_yuan 列
+                        </p>
+                    </div>
+                </div>
+
+                <div id="uploadStatus" style="margin-top:20px;padding:15px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:4px;display:none">
+                    <strong style="color:#52c41a">✓ 上传状态</strong>
+                    <div id="uploadStatusContent" style="margin-top:10px"></div>
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:30px">
+                <button class="btn btn-success" onclick="validateAndGenerateProfile()">生成用户画像</button>
+            </div>
+        </div>
+
+        <!-- 用户画像结果 -->
+        <div class="card hidden" id="profileResult">
+            <h2>用户画像分析结果</h2>
+            <div class="score-circle">
+                <div class="score-value" id="adaptScore">85</div>
+                <div class="score-label">适配评分</div>
+            </div>
+            <p style="text-align:center;font-size:18px;color:#333;margin-bottom:30px" id="conclusion">
+                用户储能适配性良好，建议结合实际情况评估投资
+            </p>
+            <div style="text-align:center">
+                <button class="btn btn-primary" onclick="showStep2()">下一步：配置策略</button>
+            </div>
+        </div>
+
+        <!-- 步骤2：策略配置 -->
+        <div class="card hidden" id="step2">
+            <h2>步骤二：策略配置</h2>
+
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab(this, 'essParams')">储能参数</div>
+                <div class="tab" onclick="switchTab(this, 'strategyParams')">策略目标</div>
+                <div class="tab" onclick="switchTab(this, 'economicsParams')">经济性参数</div>
+            </div>
+
+            <div id="essParams" class="tab-content active">
+                <div class="form-row">
+                    <div class="form-item">
+                        <label>SOC下限</label>
+                        <input type="number" id="socMin" value="0.1" min="0" max="1" step="0.1">
+                    </div>
+                    <div class="form-item">
+                        <label>SOC上限</label>
+                        <input type="number" id="socMax" value="0.9" min="0" max="1" step="0.1">
+                    </div>
+                    <div class="form-item">
+                        <label>初始SOC</label>
+                        <input type="number" id="socInitial" value="0.5" min="0" max="1" step="0.1">
+                    </div>
+                    <div class="form-item">
+                        <label>充放电效率</label>
+                        <input type="number" id="efficiency" value="0.95" min="0.7" max="1" step="0.01">
+                    </div>
+                </div>
+            </div>
+
+            <div id="strategyParams" class="tab-content">
+                <div class="alert">✅ 峰谷套利（必选）：通过低谷充电、高峰放电获取电价差收益</div>
+                <div class="form-row">
+                    <div class="form-item">
+                        <label>
+                            <input type="checkbox" id="enableDemandManage" style="width:auto;margin-right:8px">
+                            启用需量管理
+                        </label>
+                    </div>
+                    <div class="form-item">
+                        <label>目标需量值 (kW)</label>
+                        <input type="number" id="targetDemand" value="800" min="0">
+                    </div>
+                </div>
+                <div class="alert" style="background:#fff7e6;border-color:#ffd591;color:#d46b08">
+                    ⚠️ 防逆流约束：防止光伏/储能向电网反向送电
+                </div>
+                <div class="form-row">
+                    <div class="form-item">
+                        <label>
+                            <input type="checkbox" id="enableAntiReverse" style="width:auto;margin-right:8px">
+                            启用光伏防逆流
+                        </label>
+                        <small style="color:#999;display:block;margin-top:4px">防止光伏发电向电网倒送</small>
+                    </div>
+                    <div class="form-item">
+                        <label>
+                            <input type="checkbox" id="enableEssAntiReverse" style="width:auto;margin-right:8px">
+                            启用储能防逆流
+                        </label>
+                        <small style="color:#999;display:block;margin-top:4px">防止储能放电向电网倒送</small>
+                    </div>
+                </div>
+            </div>
+
+            <div id="economicsParams" class="tab-content">
+                <div class="form-row">
+                    <div class="form-item">
+                        <label>系统单价 (元/kWh)</label>
+                        <input type="number" id="unitPrice" value="1000" min="500" step="50" oninput="updateOMCalc()">
+                        <small style="color:#999">储能系统单位容量价格</small>
+                    </div>
+                    <div class="form-item">
+                        <label>系统寿命 (年)</label>
+                        <input type="number" id="systemLife" value="15" min="5" max="25">
+                    </div>
+                    <div class="form-item">
+                        <label>残值率 (%)</label>
+                        <input type="number" id="residualRate" value="20" min="0" max="50">
+                    </div>
+                </div>
+
+                <h3 style="margin:20px 0 15px;color:#333">运维成本计算方式</h3>
+                <div class="radio-group" style="margin-bottom:20px">
+                    <label>
+                        <input type="radio" name="omCalcMethod" value="fixed" checked onchange="updateOMCalc()">
+                        <div>
+                            <div>固定金额</div>
+                            <small style="color:#999">直接输入年运维费</small>
+                        </div>
+                    </label>
+                    <label>
+                        <input type="radio" name="omCalcMethod" value="perKwh" onchange="updateOMCalc()">
+                        <div>
+                            <div>每kWh运维</div>
+                            <small style="color:#999">基于储能容量计算</small>
+                        </div>
+                    </label>
+                    <label>
+                        <input type="radio" name="omCalcMethod" value="percent" onchange="updateOMCalc()">
+                        <div>
+                            <div>系统总价比例</div>
+                            <small style="color:#999">基于总投资计算</small>
+                        </div>
+                    </label>
+                </div>
+
+                <div id="omFixedInput">
+                    <div class="form-row">
+                        <div class="form-item">
+                            <label>年运维费用 (元/年)</label>
+                            <input type="number" id="omFixedAmount" value="40000" min="0" step="1000" oninput="updateOMCalc()">
+                            <small style="color:#999">例如：50000 表示每年运维费5万元</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="omPerKwhInput" style="display:none">
+                    <div class="form-row">
+                        <div class="form-item">
+                            <label>每kWh年运维费 (元/kWh/年)</label>
+                            <input type="number" id="omPerKwhRate" value="20" min="0" max="100" step="5" oninput="updateOMCalc()">
+                            <small style="color:#999">基于储能容量计算</small>
+                        </div>
+                        <div class="form-item">
+                            <label>预估年运维费</label>
+                            <div id="omPerKwhResult" style="color:#1890ff;font-weight:bold;padding:10px 0">4万元/年</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="omPercentInput" style="display:none">
+                    <div class="form-row">
+                        <div class="form-item">
+                            <label>年运维费率 (%)</label>
+                            <select id="omPercentRate" onchange="updateOMCalc()" style="width:100%;padding:10px 12px;border:1px solid #d9d9d9;border-radius:4px">
+                                <option value="1">1% - 基本免维护</option>
+                                <option value="2" selected>2% - 标准运维</option>
+                                <option value="3">3% - 含保险/监控等</option>
+                            </select>
+                            <small style="color:#999">基于系统总投资计算</small>
+                        </div>
+                        <div class="form-item">
+                            <label>预估年运维费</label>
+                            <div id="omPercentResult" style="color:#1890ff;font-weight:bold;padding:10px 0">4万元/年</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:4px;padding:16px;margin-top:20px">
+                    <strong style="color:#52c41a">✓ 当前年运维费用估算：</strong>
+                    <span id="omTotalResult" style="color:#52c41a;font-size:18px;font-weight:bold;margin-left:10px">4万元/年</span>
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:30px">
+                <button class="btn btn-success" onclick="runOptimization()">提交诊断</button>
+            </div>
+        </div>
+
+        <!-- 加载中 -->
+        <div class="card hidden" id="loading">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <h3>正在执行MILP优化计算...</h3>
+            </div>
+        </div>
+
+        <!-- 诊断报告 -->
+        <div class="card hidden" id="report">
+            <h2>策略诊断报告</h2>
+            <div class="result-cards">
+                <div class="result-card">
+                    <div class="result-value" id="dailySavings">0 元</div>
+                    <div class="result-label">每日节省电费</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-value" id="savingsPercent">0%</div>
+                    <div class="result-label">电费降低比例</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-value" id="payback">0 年</div>
+                    <div class="result-label">预计回收期</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-value" id="roi">0%</div>
+                    <div class="result-label">年收益率</div>
+                </div>
+            </div>
+
+            <!-- 优化前/优化后全维度对比 -->
+            <h3 style="margin:30px 0 20px;color:#333;border-bottom:2px solid #1890ff;padding-bottom:10px">
+                📊 优化前/优化后全维度对比
+            </h3>
+            <div style="overflow-x:auto">
+                <table style="width:100%;border-collapse:collapse;font-size:14px">
+                    <thead>
+                        <tr style="background:#1890ff;color:white">
+                            <th style="padding:12px;border:1px solid #d9d9d9;text-align:left">对比维度</th>
+                            <th style="padding:12px;border:1px solid #d9d9d9;text-align:center">优化前</th>
+                            <th style="padding:12px;border:1px solid #d9d9d9;text-align:center">优化后</th>
+                            <th style="padding:12px;border:1px solid #d9d9d9;text-align:center">变化量</th>
+                            <th style="padding:12px;border:1px solid #d9d9d9;text-align:center">变化率</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonTable">
+                        <!-- 动态生成对比数据 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 基本电费优化分析 -->
+            <h3 style="margin:30px 0 20px;color:#333;border-bottom:2px solid #fa541c;padding-bottom:10px">
+                ⚡ 基本电费优化分析
+            </h3>
+            <div style="background:#fff2e8;border:1px solid #ffbb96;border-radius:8px;padding:20px;margin-bottom:20px">
+                <!-- 当前计费方式展示 -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:20px">
+                    <div style="background:white;padding:15px;border-radius:8px;text-align:center;border:2px solid #ffbb96">
+                        <div style="font-size:12px;color:#999;margin-bottom:5px">变压器容量</div>
+                        <div style="font-size:24px;font-weight:bold;color:#fa541c" id="reportTransformerCapacity">--</div>
+                        <div style="font-size:12px;color:#666">kVA</div>
+                    </div>
+                    <div style="background:white;padding:15px;border-radius:8px;text-align:center;border:2px solid #ffbb96">
+                        <div style="font-size:12px;color:#999;margin-bottom:5px">当前计费方式</div>
+                        <div style="font-size:24px;font-weight:bold;color:#fa541c" id="reportBillingMode">--</div>
+                    </div>
+                    <div style="background:white;padding:15px;border-radius:8px;text-align:center;border:2px solid #ffbb96">
+                        <div style="font-size:12px;color:#999;margin-bottom:5px">历史最大需量</div>
+                        <div style="font-size:24px;font-weight:bold;color:#fa541c" id="reportMaxDemand">--</div>
+                        <div style="font-size:12px;color:#666">kW</div>
+                    </div>
+                </div>
+
+                <!-- 计费方式对比表格 -->
+                <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:20px;background:white;border-radius:8px;overflow:hidden">
+                    <thead>
+                        <tr style="background:#fa541c;color:white">
+                            <th style="padding:12px;border:1px solid #ffbb96;text-align:left">计费方式</th>
+                            <th style="padding:12px;border:1px solid #ffbb96;text-align:center">月基本电费</th>
+                            <th style="padding:12px;border:1px solid #ffbb96;text-align:center">年基本电费</th>
+                            <th style="padding:12px;border:1px solid #ffbb96;text-align:center">优化建议</th>
+                        </tr>
+                    </thead>
+                    <tbody id="billingComparisonTable">
+                        <tr style="border-bottom:1px solid #f0f0f0">
+                            <td style="padding:12px;border:1px solid #f0f0f0">
+                                <strong>按变压器容量</strong><br>
+                                <small style="color:#999">固定成本</small>
+                            </td>
+                            <td style="padding:12px;border:1px solid #f0f0f0;text-align:center" id="capacityMonthlyCharge">--</td>
+                            <td style="padding:12px;border:1px solid #f0f0f0;text-align:center" id="capacityAnnualCharge">--</td>
+                            <td style="padding:12px;border:1px solid #f0f0f0;text-align:center" id="capacityAdvice">--</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f0f0f0;background:#fff7e6">
+                            <td style="padding:12px;border:1px solid #f0f0f0">
+                                <strong>按实际最大需量（优化前）</strong><br>
+                                <small style="color:#999">可变成本</small>
+                            </td>
+                            <td style="padding:12px;border:1px solid #f0f0f0;text-align:center" id="demandMonthlyChargeBefore">--</td>
+                            <td style="padding:12px;border:1px solid #f0f0f0;text-align:center" id="demandAnnualChargeBefore">--</td>
+                            <td style="padding:12px;border:1px solid #f0f0f0;text-align:center" rowspan="2">
+                                <span id="demandAdvice" style="color:#52c41a;font-weight:bold">--</span>
+                            </td>
+                        </tr>
+                        <tr style="background:#f6ffed">
+                            <td style="padding:12px;border:1px solid #f0f0f0">
+                                <strong>按实际最大需量（优化后）</strong><br>
+                                <small style="color:#52c41a">储能削峰效果</small>
+                            </td>
+                            <td style="padding:12px;border:1px solid #f0f0f0;text-align:center;color:#52c41a;font-weight:bold" id="demandMonthlyChargeAfter">--</td>
+                            <td style="padding:12px;border:1px solid #f0f0f0;text-align:center;color:#52c41a;font-weight:bold" id="demandAnnualChargeAfter">--</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- 优化效果展示 -->
+                <div id="demandOptimizationResult" style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;padding:15px;display:none">
+                    <h4 style="color:#52c41a;margin-bottom:10px">🎯 储能削峰优化效果</h4>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px">
+                        <div style="text-align:center">
+                            <div style="font-size:12px;color:#666">最大需量降低</div>
+                            <div style="font-size:20px;font-weight:bold;color:#52c41a" id="demandReduction">--</div>
+                            <div style="font-size:12px;color:#999">kW</div>
+                        </div>
+                        <div style="text-align:center">
+                            <div style="font-size:12px;color:#666">月节省金额</div>
+                            <div style="font-size:20px;font-weight:bold;color:#52c41a" id="monthlySavings">--</div>
+                            <div style="font-size:12px;color:#999">元</div>
+                        </div>
+                        <div style="text-align:center">
+                            <div style="font-size:12px;color:#666">年节省金额</div>
+                            <div style="font-size:20px;font-weight:bold;color:#52c41a" id="annualSavings">--</div>
+                            <div style="font-size:12px;color:#999">元</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 策略建议 -->
+                <div id="billingStrategyAdvice" style="margin-top:20px;padding:15px;background:white;border-radius:8px;border:1px solid #d9d9d9">
+                    <h4 style="color:#333;margin-bottom:10px">💡 计费方式优化建议</h4>
+                    <ul id="billingAdviceList" style="padding-left:20px;line-height:1.8;color:#666">
+                        <!-- 动态生成建议 -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 储能运行策略摘要 -->
+            <h3 style="margin:30px 0 20px;color:#333;border-bottom:2px solid #52c41a;padding-bottom:10px">
+                🔋 储能运行策略摘要
+            </h3>
+            <div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;padding:20px">
+                <div id="strategySummary" style="line-height:2">
+                    <!-- 动态生成策略摘要 -->
+                </div>
+            </div>
+
+            <!-- 24小时运行曲线图 -->
+            <h3 style="margin:30px 0 20px;color:#333;border-bottom:2px solid #722ed1;padding-bottom:10px">
+                📈 24小时运行曲线
+            </h3>
+            <div style="background:#fafafa;border:1px solid #d9d9d9;border-radius:8px;padding:20px">
+                <canvas id="operationChart" width="800" height="300" style="width:100%;max-width:800px;margin:0 auto;display:block"></canvas>
+            </div>
+
+            <!-- 算法计算公式 -->
+            <h3 style="margin:30px 0 20px;color:#333;border-bottom:2px solid #fa8c16;padding-bottom:10px">
+                📐 算法计算公式说明
+            </h3>
+            <div style="background:#fff7e6;border:1px solid #ffd591;border-radius:8px;padding:20px">
+                <div id="formulaSection" style="line-height:1.8">
+
+                    <!-- 1. 用户画像评分公式 -->
+                    <div style="margin-bottom:24px">
+                        <h4 style="color:#d46b08;margin-bottom:12px">1. 用户画像适配评分</h4>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>Score</strong> = w₁×PriceScore + w₂×LoadScore + w₃×PVScore
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>PriceScore</strong> = min(100, (P<sub>max</sub> - P<sub>min</sub>) / 0.8 × 100)
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>LoadScore</strong> = min(100, (L<sub>max</sub> - L<sub>min</sub>) / L<sub>max</sub> × 100)
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>PVScore</strong> = min(100, PV<sub>capacity</sub> / Load<sub>avg</sub> × 100)
+                            </code>
+                        </div>
+                        <p style="color:#666;font-size:13px;margin-top:8px">
+                            其中：w₁=0.4, w₂=0.35, w₃=0.25 为权重系数
+                        </p>
+                    </div>
+
+                    <!-- 2. MILP优化目标函数 -->
+                    <div style="margin-bottom:24px">
+                        <h4 style="color:#d46b08;margin-bottom:12px">2. MILP优化目标函数</h4>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>min</strong> Σₜ(C<sub>grid</sub>(t) × P<sub>grid</sub>(t) × Δt) + C<sub>demand</sub> × max(P<sub>grid</sub>)
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                C<sub>grid</sub>(t) = C<sub>base</sub>(t) × (1 - SelfUse(t) / Load(t))
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px">
+                            <code style="font-family:'Courier New',monospace">
+                                C<sub>demand</sub> = 40 元/kW/月
+                            </code>
+                        </div>
+                    </div>
+
+                    <!-- 3. 储能系统约束条件 -->
+                    <div style="margin-bottom:24px">
+                        <h4 style="color:#d46b08;margin-bottom:12px">3. 储能系统约束条件</h4>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>SOC约束：</strong> SOC<sub>min</sub> ≤ SOC(t) ≤ SOC<sub>max</sub>
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>功率约束：</strong> -P<sub>rated</sub> ≤ P<sub>ess</sub>(t) ≤ P<sub>rated</sub>
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>SOC动态：</strong> SOC(t+1) = SOC(t) + (η<sub>c</sub>×P<sub>ch</sub> - P<sub>dis</sub>/η<sub>d</sub>) × Δt / E<sub>rated</sub>
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>功率平衡：</strong> P<sub>load</sub>(t) = P<sub>grid</sub>(t) + P<sub>pv</sub>(t) + P<sub>ess</sub>(t)
+                            </code>
+                        </div>
+                    </div>
+
+                    <!-- 4. 防逆流约束 -->
+                    <div style="margin-bottom:24px">
+                        <h4 style="color:#d46b08;margin-bottom:12px">4. 防逆流约束条件</h4>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>光伏防逆流：</strong> P<sub>pv_export</sub>(t) = max(0, P<sub>pv</sub>(t) - P<sub>load</sub>(t) - P<sub>ch</sub>(t)) = 0
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>储能防逆流：</strong> P<sub>ess</sub>(t) ≤ P<sub>load</sub>(t) - P<sub>pv</sub>(t) + P<sub>grid_min</sub>
+                            </code>
+                        </div>
+                    </div>
+
+                    <!-- 5. 需量管理约束 -->
+                    <div style="margin-bottom:24px">
+                        <h4 style="color:#d46b08;margin-bottom:12px">5. 需量管理约束</h4>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>需量限制：</strong> P<sub>grid</sub>(t) ≤ P<sub>target</sub> + P<sub>ess_dis</sub>(t)
+                            </code>
+                        </div>
+                    </div>
+
+                    <!-- 6. 经济性计算公式 -->
+                    <div style="margin-bottom:24px">
+                        <h4 style="color:#d46b08;margin-bottom:12px">6. 经济性计算公式</h4>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>总投资：</strong> Investment = Capacity × UnitPrice
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>年净收益：</strong> AnnualNet = DailySavings × 365 - OMCost
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>回收期：</strong> Payback = Investment / AnnualNet
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>年收益率：</strong> ROI = (AnnualNet × Life - Investment + Residual) / Investment / Life × 100%
+                            </code>
+                        </div>
+                    </div>
+
+                    <!-- 7. 时间粒度转换公式 -->
+                    <div>
+                        <h4 style="color:#d46b08;margin-bottom:12px">7. 时间粒度转换公式</h4>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px;margin-bottom:8px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>月级→日级：</strong> P<sub>daily</sub>(h) = P<sub>monthly</sub>(d,h),  h = 0,1,...,23
+                            </code>
+                        </div>
+                        <div style="background:white;border:1px solid #ffe7ba;border-radius:4px;padding:12px">
+                            <code style="font-family:'Courier New',monospace">
+                                <strong>年级→日级：</strong> P<sub>daily</sub> = Σ<sub>d=1</sub><sup>365</sup> P<sub>yearly</sub>(d) / 365
+                            </code>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:30px">
+                <button class="btn btn-primary" onclick="reset()">重新计算</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 电价库配置 ====================
+        const ELECTRICITY_PRICE_DB = {
+            guangdong: {
+                name: '广东省',
+                userTypes: {
+                    large_industrial: {
+                        name: '大工业用电',
+                        voltageLevels: {
+                            '1-10kV': {
+                                capacityPrice: 32,      // 容量电价 元/kVA/月
+                                demandPrice: 48,        // 需量电价 元/kW/月
+                                energyPrice: { peak: 1.0348, high: 0.8198, flat: 0.5951, valley: 0.3351 }
+                            },
+                            '35-110kV': {
+                                capacityPrice: 28,
+                                demandPrice: 44,
+                                energyPrice: { peak: 1.0098, high: 0.7948, flat: 0.5701, valley: 0.3101 }
+                            },
+                            '220kV': {
+                                capacityPrice: 23,
+                                demandPrice: 40,
+                                energyPrice: { peak: 0.9848, high: 0.7698, flat: 0.5451, valley: 0.2851 }
+                            }
+                        },
+                        timeSlots: {
+                            peak: [9, 10, 11, 14, 15, 16, 17, 18],      // 9-12点, 14-19点
+                            high: [8, 12, 13, 19, 20, 21],              // 8-9点, 12-14点, 19-22点
+                            flat: [7, 22],                              // 7-8点, 22-23点
+                            valley: [23, 0, 1, 2, 3, 4, 5, 6]          // 23-7点
+                        }
+                    },
+                    general_commercial: {
+                        name: '一般工商业',
+                        voltageLevels: {
+                            '1-10kV': { capacityPrice: 32, demandPrice: 48, energyPrice: { peak: 1.0348, high: 0.8198, flat: 0.5951, valley: 0.3351 } },
+                            '35-110kV': { capacityPrice: 28, demandPrice: 44, energyPrice: { peak: 1.0098, high: 0.7948, flat: 0.5701, valley: 0.3101 } }
+                        },
+                        timeSlots: {
+                            peak: [9, 10, 11, 14, 15, 16, 17, 18],
+                            high: [8, 12, 13, 19, 20, 21],
+                            flat: [7, 22],
+                            valley: [23, 0, 1, 2, 3, 4, 5, 6]
+                        }
+                    }
+                }
+            },
+            jiangsu: {
+                name: '江苏省',
+                userTypes: {
+                    large_industrial: {
+                        name: '大工业用电',
+                        voltageLevels: {
+                            '1-10kV': { capacityPrice: 30, demandPrice: 45, energyPrice: { peak: 1.0698, high: 0.7898, flat: 0.5298, valley: 0.2998 } },
+                            '35-110kV': { capacityPrice: 26, demandPrice: 42, energyPrice: { peak: 1.0448, high: 0.7648, flat: 0.5048, valley: 0.2748 } }
+                        },
+                        timeSlots: {
+                            peak: [8, 9, 10, 11, 12, 13, 17, 18, 19, 20, 21],
+                            high: [14, 15, 16],
+                            flat: [7, 22],
+                            valley: [23, 0, 1, 2, 3, 4, 5, 6]
+                        }
+                    }
+                }
+            },
+            zhejiang: {
+                name: '浙江省',
+                userTypes: {
+                    large_industrial: {
+                        name: '大工业用电',
+                        voltageLevels: {
+                            '1-10kV': { capacityPrice: 31, demandPrice: 46, energyPrice: { peak: 0.9889, high: 0.7389, flat: 0.5089, valley: 0.2889 } }
+                        },
+                        timeSlots: {
+                            peak: [9, 10, 11, 13, 14, 15, 16, 17, 19, 20, 21],
+                            high: [8, 12, 18],
+                            flat: [7, 22],
+                            valley: [23, 0, 1, 2, 3, 4, 5, 6]
+                        }
+                    }
+                }
+            },
+            shandong: {
+                name: '山东省',
+                userTypes: {
+                    large_industrial: {
+                        name: '大工业用电',
+                        voltageLevels: {
+                            '1-10kV': { capacityPrice: 29, demandPrice: 43, energyPrice: { peak: 0.9548, high: 0.7248, flat: 0.5148, valley: 0.2948 } }
+                        },
+                        timeSlots: {
+                            peak: [9, 10, 11, 14, 15, 16, 17],
+                            high: [8, 12, 13, 18, 19, 20, 21],
+                            flat: [7, 22],
+                            valley: [23, 0, 1, 2, 3, 4, 5, 6]
+                        }
+                    }
+                }
+            },
+            henan: {
+                name: '河南省',
+                userTypes: {
+                    large_industrial: {
+                        name: '大工业用电',
+                        voltageLevels: {
+                            '1-10kV': { capacityPrice: 28, energyPrice: { peak: 0.8648, high: 0.6548, flat: 0.4548, valley: 0.2548 } }
+                        },
+                        timeSlots: {
+                            peak: [9, 10, 11, 14, 15, 16, 17, 18],
+                            high: [8, 12, 13, 19, 20, 21],
+                            flat: [7, 22],
+                            valley: [23, 0, 1, 2, 3, 4, 5, 6]
+                        }
+                    }
+                }
+            }
+        };
+
+        let selectedPriceConfig = null;  // 存储选中的电价配置
+        let isUsingSystemPrice = false;  // 是否使用系统电价
+
+        // ==================== 配置 ====================
+        const TIME_GRANULARITY_CONFIG = {
+            daily: { name: '日级', points: 96, interval: '15分钟', desc: '典型日24小时，15分钟粒度共96个数据点' },
+            monthly: { name: '月级', points: 2880, interval: '15分钟', desc: '30天×24小时，15分钟粒度共2880个数据点' },
+            yearly: { name: '年级', points: 35040, interval: '15分钟', desc: '365天×24小时，15分钟粒度共35040个数据点' }
+        };
+
+        let currentGranularity = 'daily';
+        let currentData = { load: [], pv: [], price: [] };
+
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            initInputs();
+            updateOMCalc();
+            onBillingModeChange();  // 初始化计费方式显示
+        });
+
+        function initInputs() {
+            createInputGrid('loadInputs', 'load', currentGranularity);
+            createInputGrid('pvInputs', 'pv', currentGranularity);
+            createInputGrid('priceInputs', 'price', currentGranularity);
+        }
+
+        function createInputGrid(containerId, type, granularity) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const config = TIME_GRANULARITY_CONFIG[granularity];
+            container.innerHTML = '';
+
+            // 年级数据在手动输入模式下显示提示
+            if (granularity === 'yearly') {
+                container.innerHTML = `
+                    <div style="grid-column:1/-1;text-align:center;padding:40px;color:#999;background:#f5f5f5;border-radius:4px;">
+                        <p style="font-size:16px;margin-bottom:10px;">📊 年级数据包含 35,040 个时间点</p>
+                        <p>数据量过大，请使用 <strong>文件上传</strong> 方式导入数据</p>
+                    </div>
+                `;
+                return;
+            }
+
+            for (let i = 0; i < config.points; i++) {
+                const div = document.createElement('div');
+                div.className = 'form-item';
+
+                let labelText = '';
+                let defaultValue = '';
+
+                if (granularity === 'daily') {
+                    const hour = Math.floor(i / 4);
+                    const minute = (i % 4) * 15;
+                    labelText = `${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
+                    if (type === 'load') defaultValue = (hour >= 8 && hour < 22) ? 800 : 300;
+                    else if (type === 'pv') defaultValue = (hour >= 6 && hour < 18) ? Math.round(Math.sin((hour-6)/12*Math.PI)*300) : 0;
+                    else if (type === 'price') defaultValue = (hour < 6 || hour >= 22) ? 0.3 : (hour >= 9 && hour < 17) ? 1.0 : 0.7;
+                } else if (granularity === 'monthly') {
+                    const day = Math.floor(i / 96) + 1;
+                    const hour = Math.floor((i % 96) / 4);
+                    const minute = (i % 4) * 15;
+                    labelText = `D${day} ${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`;
+                    if (type === 'load') defaultValue = (hour >= 8 && hour < 18) ? 800 : 300;
+                    else if (type === 'pv') defaultValue = (hour >= 6 && hour < 18) ? Math.round(Math.sin((hour-6)/12*Math.PI)*300) : 0;
+                    else if (type === 'price') defaultValue = (hour < 6 || hour >= 22) ? 0.3 : (hour >= 9 && hour < 17) ? 1.0 : 0.7;
+                }
+
+                div.innerHTML = `
+                    <label>${labelText}</label>
+                    <input type="number" id="${type}_${i}" value="${defaultValue}" min="0" step="${type==='price'?0.01:1}">
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        // ==================== 事件处理 ====================
+        function onGranularityChange() {
+            const radios = document.getElementsByName('timeGranularity');
+            for (let radio of radios) {
+                if (radio.checked) {
+                    currentGranularity = radio.value;
+                    break;
+                }
+            }
+
+            const config = TIME_GRANULARITY_CONFIG[currentGranularity];
+            document.getElementById('granularityDesc').innerHTML = `<strong>当前模式：</strong>${config.desc}`;
+
+            // 更新所有文件上传提示
+            const hintText = `文件需包含 ${config.points} 行数据（${config.interval}间隔）`;
+            const loadHint = document.getElementById('loadFileHint');
+            const pvHint = document.getElementById('pvFileHint');
+            const priceHint = document.getElementById('priceFileHint');
+            if (loadHint) loadHint.textContent = `负荷数据：${hintText}`;
+            if (pvHint) pvHint.textContent = `光伏数据：${hintText}`;
+            if (priceHint) priceHint.textContent = `电价数据：${hintText}`;
+
+            // 年级数据仅支持文件上传，自动切换
+            if (currentGranularity === 'yearly') {
+                const fileUploadTab = document.querySelector('.tab[onclick*="fileUpload"]');
+                if (fileUploadTab) {
+                    switchTab(fileUploadTab, 'fileUpload');
+                }
+                // 禁用手动输入Tab
+                const manualTab = document.querySelector('.tab[onclick*="manualInput"]');
+                if (manualTab) {
+                    manualTab.style.opacity = '0.5';
+                    manualTab.style.pointerEvents = 'none';
+                }
+                document.getElementById('manualAlert').innerHTML = `⚠️ 年级数据包含35,040个时间点，数据量过大，仅支持文件上传方式`;
+            } else {
+                // 恢复手动输入Tab
+                const manualTab = document.querySelector('.tab[onclick*="manualInput"]');
+                if (manualTab) {
+                    manualTab.style.opacity = '1';
+                    manualTab.style.pointerEvents = 'auto';
+                }
+                document.getElementById('manualAlert').innerHTML = `💡 手动输入数据（${config.interval}粒度，共${config.points}个数据点）`;
+            }
+
+            initInputs();
+
+            // 如果使用了系统电价，根据新粒度重新生成
+            if (isUsingSystemPrice && selectedPriceConfig) {
+                regeneratePriceData();
+            }
+        }
+
+        function regeneratePriceData() {
+            const config = TIME_GRANULARITY_CONFIG[currentGranularity];
+            currentData.price = [];
+
+            for (let i = 0; i < config.points; i++) {
+                const hour = getHourFromIndex(i, currentGranularity);
+                const price = getPriceForHour(hour, selectedPriceConfig);
+                currentData.price.push(price);
+            }
+
+            // 更新上传状态显示
+            uploadedFiles.price = `${selectedPriceConfig.province}-${selectedPriceConfig.userType}-${selectedPriceConfig.voltageLevel} (${config.name})`;
+            updateUploadStatus();
+        }
+
+        // ==================== 基本电费计费方式 ====================
+        function onBillingModeChange() {
+            const billingMode = document.getElementById('billingMode').value;
+            const maxDemandItem = document.getElementById('maxDemandItem');
+            const billingHint = document.getElementById('billingHint');
+
+            if (billingMode === 'demand') {
+                maxDemandItem.style.display = 'block';
+                billingHint.innerHTML = '💡 <strong>按需量计费</strong>：储能可在负荷高峰时放电，降低最大需量，节省基本电费';
+                billingHint.style.background = '#e6f7ff';
+                billingHint.style.color = '#096dd9';
+            } else {
+                maxDemandItem.style.display = 'none';
+                billingHint.innerHTML = '💡 <strong>按容量计费</strong>：基本电费固定，储能主要通过峰谷套利获得收益';
+                billingHint.style.background = '#fff7e6';
+                billingHint.style.color = '#d46b08';
+            }
+        }
+
+        function getHourFromIndex(index, granularity) {
+            if (granularity === 'daily') {
+                return Math.floor(index / 4);
+            } else if (granularity === 'monthly') {
+                return Math.floor((index % 96) / 4);
+            } else {
+                return Math.floor((index % 96) / 4);
+            }
+        }
+
+        // ==================== 手动输入区域电价库功能 ====================
+        let manualSelectedPriceConfig = null;
+
+        function onManualProvinceChange() {
+            const province = document.getElementById('manualProvince').value;
+            const userTypeSelect = document.getElementById('manualUserType');
+            const voltageSelect = document.getElementById('manualVoltageLevel');
+
+            userTypeSelect.value = '';
+            voltageSelect.innerHTML = '<option value="">请选择</option>';
+            updateManualPricePreview();
+        }
+
+        function onManualUserTypeChange() {
+            const province = document.getElementById('manualProvince').value;
+            const userType = document.getElementById('manualUserType').value;
+            const voltageSelect = document.getElementById('manualVoltageLevel');
+
+            voltageSelect.innerHTML = '<option value="">请选择</option>';
+
+            if (province && userType && ELECTRICITY_PRICE_DB[province]?.userTypes[userType]) {
+                const voltageLevels = ELECTRICITY_PRICE_DB[province].userTypes[userType].voltageLevels;
+                for (let level in voltageLevels) {
+                    const option = document.createElement('option');
+                    option.value = level;
+                    option.textContent = level;
+                    voltageSelect.appendChild(option);
+                }
+            }
+
+            updateManualPricePreview();
+        }
+
+        function onManualVoltageChange() {
+            updateManualPricePreview();
+        }
+
+        function updateManualPricePreview() {
+            const province = document.getElementById('manualProvince').value;
+            const userType = document.getElementById('manualUserType').value;
+            const voltageLevel = document.getElementById('manualVoltageLevel').value;
+            const previewSpan = document.getElementById('manualPricePreview');
+            const applyBtn = document.getElementById('applyManualPriceBtn');
+
+            if (province && userType && voltageLevel) {
+                const config = ELECTRICITY_PRICE_DB[province].userTypes[userType].voltageLevels[voltageLevel];
+                manualSelectedPriceConfig = {
+                    province: ELECTRICITY_PRICE_DB[province].name,
+                    userType: ELECTRICITY_PRICE_DB[province].userTypes[userType].name,
+                    voltageLevel: voltageLevel,
+                    ...config,
+                    timeSlots: ELECTRICITY_PRICE_DB[province].userTypes[userType].timeSlots
+                };
+
+                previewSpan.innerHTML = `峰:${config.energyPrice.peak} 谷:${config.energyPrice.valley} 平:${config.energyPrice.flat}`;
+                applyBtn.disabled = false;
+            } else {
+                previewSpan.textContent = '';
+                applyBtn.disabled = true;
+                manualSelectedPriceConfig = null;
+            }
+        }
+
+        function applyManualPriceTemplate() {
+            if (!manualSelectedPriceConfig) {
+                alert('请先选择省份、用电类型和电压等级');
+                return;
+            }
+
+            const config = TIME_GRANULARITY_CONFIG[currentGranularity];
+
+            // 填充到手动输入网格
+            for (let i = 0; i < config.points; i++) {
+                const hour = getHourFromIndex(i, currentGranularity);
+                const price = getPriceForHour(hour, manualSelectedPriceConfig);
+                const input = document.getElementById(`price_${i}`);
+                if (input) {
+                    input.value = price;
+                }
+            }
+
+            // 同时更新当前数据
+            currentData.price = [];
+            for (let i = 0; i < config.points; i++) {
+                const hour = getHourFromIndex(i, currentGranularity);
+                currentData.price.push(getPriceForHour(hour, manualSelectedPriceConfig));
+            }
+
+            isUsingSystemPrice = true;
+            selectedPriceConfig = manualSelectedPriceConfig;
+
+            alert(`✓ 已应用电价模板到${config.name}输入框\n省份: ${manualSelectedPriceConfig.province}\n高峰: ${manualSelectedPriceConfig.energyPrice.peak} 元/kWh\n低谷: ${manualSelectedPriceConfig.energyPrice.valley} 元/kWh`);
+        }
+
+        function switchTab(tab, contentId) {
+            const parent = tab.parentElement;
+            parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(contentId).classList.add('active');
+        }
+
+        // ==================== 运维成本计算 ====================
+        function updateOMCalc() {
+            const method = document.querySelector('input[name="omCalcMethod"]:checked')?.value || 'fixed';
+            const capacity = parseFloat(document.getElementById('capacity')?.value || 2000);
+            const unitPrice = parseFloat(document.getElementById('unitPrice')?.value || 1000);
+            const investment = capacity * unitPrice;
+
+            // 显示/隐藏对应输入区域
+            document.getElementById('omFixedInput').style.display = method === 'fixed' ? 'block' : 'none';
+            document.getElementById('omPerKwhInput').style.display = method === 'perKwh' ? 'block' : 'none';
+            document.getElementById('omPercentInput').style.display = method === 'percent' ? 'block' : 'none';
+
+            let annualOM = 0;
+
+            if (method === 'fixed') {
+                annualOM = parseFloat(document.getElementById('omFixedAmount')?.value || 40000);
+            } else if (method === 'perKwh') {
+                const perKwhRate = parseFloat(document.getElementById('omPerKwhRate')?.value || 20);
+                annualOM = perKwhRate * capacity;
+                document.getElementById('omPerKwhResult').textContent = (annualOM / 10000).toFixed(1) + '万元/年';
+            } else if (method === 'percent') {
+                const percentRate = parseFloat(document.getElementById('omPercentRate')?.value || 2);
+                annualOM = investment * (percentRate / 100);
+                document.getElementById('omPercentResult').textContent = (annualOM / 10000).toFixed(1) + '万元/年';
+            }
+
+            // 更新总结果显示
+            document.getElementById('omTotalResult').textContent = (annualOM / 10000).toFixed(1) + '万元/年';
+
+            return annualOM;
+        }
+
+        // 获取年运维费用（供其他函数调用）
+        function getAnnualOMCost() {
+            return updateOMCalc();
+        }
+
+        // ==================== 数据生成 ====================
+        function generateLoadData() {
+            const config = TIME_GRANULARITY_CONFIG[currentGranularity];
+            for (let i = 0; i < config.points; i++) {
+                const input = document.getElementById(`load_${i}`);
+                if (!input) continue;
+
+                let value = 300;
+                if (currentGranularity === 'daily' || currentGranularity === 'monthly') {
+                    let hour = currentGranularity === 'daily' ? i / 4 : i % 24;
+                    if (hour >= 8 && hour < 10) value = 640;
+                    else if (hour >= 10 && hour < 12) value = 480;
+                    else if (hour >= 12 && hour < 14) value = 720;
+                    else if (hour >= 14 && hour < 18) value = 560;
+                    else if (hour >= 18 && hour < 22) value = 800;
+                } else {
+                    value = 750;
+                }
+                input.value = value;
+            }
+            alert(`已生成典型${config.name}负荷曲线`);
+        }
+
+        function generatePVData() {
+            const config = TIME_GRANULARITY_CONFIG[currentGranularity];
+            for (let i = 0; i < config.points; i++) {
+                const input = document.getElementById(`pv_${i}`);
+                if (!input) continue;
+
+                let value = 0;
+                if (currentGranularity === 'daily' || currentGranularity === 'monthly') {
+                    let hour = currentGranularity === 'daily' ? i / 4 : i % 24;
+                    if (hour >= 6 && hour < 18) {
+                        value = Math.round(Math.sin((hour - 6) / 12 * Math.PI) * 300);
+                    }
+                } else {
+                    value = 1200;
+                }
+                input.value = value;
+            }
+            alert(`已生成典型${config.name}光伏曲线`);
+        }
+
+        function generatePriceData() {
+            const config = TIME_GRANULARITY_CONFIG[currentGranularity];
+            for (let i = 0; i < config.points; i++) {
+                const input = document.getElementById(`price_${i}`);
+                if (!input) continue;
+
+                let value = 0.7;
+                if (currentGranularity === 'daily' || currentGranularity === 'monthly') {
+                    let hour = currentGranularity === 'daily' ? i / 4 : i % 24;
+                    if (hour < 6 || hour >= 22) value = 0.3;
+                    else if (hour >= 9 && hour < 17) value = 1.0;
+                } else {
+                    value = 0.7;
+                }
+                input.value = value.toFixed(2);
+            }
+            alert(`已生成典型${config.name}电价数据`);
+        }
+
+        // 上传状态跟踪
+        let uploadStatus = { load: false, pv: false, price: false };
+        let uploadedFiles = { load: null, pv: null, price: null };
+
+        function handleFileUpload(input, dataType) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const typeNames = { load: '负荷数据', pv: '光伏数据', price: '电价数据' };
+
+                // 模拟文件解析成功
+                uploadStatus[dataType] = true;
+                uploadedFiles[dataType] = file.name;
+
+                // 显示上传状态
+                updateUploadStatus();
+
+                alert(`✓ ${typeNames[dataType]}上传成功\n文件: ${file.name}\n（实际项目中会解析CSV/Excel数据）`);
+            }
+        }
+
+        function updateUploadStatus() {
+            const statusDiv = document.getElementById('uploadStatus');
+            const contentDiv = document.getElementById('uploadStatusContent');
+
+            if (!statusDiv || !contentDiv) return;
+
+            const typeNames = { load: '负荷数据', pv: '光伏数据', price: '电价数据' };
+            let html = '';
+            let hasUploaded = false;
+
+            for (let [type, uploaded] of Object.entries(uploadStatus)) {
+                if (uploaded && uploadedFiles[type]) {
+                    hasUploaded = true;
+                    html += `<div style="margin:5px 0;display:flex;align-items:center;gap:10px">
+                        <span style="color:#52c41a">✓</span>
+                        <span>${typeNames[type]}: ${uploadedFiles[type]}</span>
+                    </div>`;
+                }
+            }
+
+            if (hasUploaded) {
+                statusDiv.style.display = 'block';
+                contentDiv.innerHTML = html;
+            }
+        }
+
+        // ==================== 模板下载功能 ====================
+        function downloadTemplate(dataType) {
+            const config = TIME_GRANULARITY_CONFIG[currentGranularity];
+            const typeNames = { load: '负荷', pv: '光伏', price: '电价' };
+            const valueColumns = { load: 'load_kw', pv: 'pv_kw', price: 'price_yuan' };
+
+            // 生成CSV内容
+            let csvContent = 'timestamp,' + valueColumns[dataType] + '\n';
+
+            for (let i = 0; i < config.points; i++) {
+                let timestamp = '';
+                let defaultValue = '';
+
+                if (currentGranularity === 'daily') {
+                    const hour = Math.floor(i / 4);
+                    const minute = (i % 4) * 15;
+                    timestamp = `2024-01-01 ${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}:00`;
+                    if (dataType === 'load') defaultValue = (hour >= 8 && hour < 22) ? 800 : 300;
+                    else if (dataType === 'pv') defaultValue = (hour >= 6 && hour < 18) ? Math.round(Math.sin((hour-6)/12*Math.PI)*300) : 0;
+                    else if (dataType === 'price') defaultValue = (hour < 6 || hour >= 22) ? 0.3 : (hour >= 9 && hour < 17) ? 1.0 : 0.7;
+                } else if (currentGranularity === 'monthly') {
+                    const day = Math.floor(i / 96) + 1;
+                    const hour = Math.floor((i % 96) / 4);
+                    const minute = (i % 4) * 15;
+                    timestamp = `2024-01-${day.toString().padStart(2,'0')} ${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}:00`;
+                    if (dataType === 'load') defaultValue = (hour >= 8 && hour < 18) ? 800 : 300;
+                    else if (dataType === 'pv') defaultValue = (hour >= 6 && hour < 18) ? Math.round(Math.sin((hour-6)/12*Math.PI)*300) : 0;
+                    else if (dataType === 'price') defaultValue = (hour < 6 || hour >= 22) ? 0.3 : (hour >= 9 && hour < 17) ? 1.0 : 0.7;
+                } else {
+                    const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+                    const daysInMonth = [31,28,31,30,31,30,31,31,30,31,30,31];
+                    let totalDays = 0;
+                    let month = 0;
+                    let dayOfYear = Math.floor(i / 96);
+                    for (let m = 0; m < 12; m++) {
+                        if (dayOfYear < totalDays + daysInMonth[m]) { month = m; dayOfYear -= totalDays; break; }
+                        totalDays += daysInMonth[m];
+                    }
+                    const hour = Math.floor((i % 96) / 4);
+                    const minute = (i % 4) * 15;
+                    timestamp = `2024-${months[month]}-${(dayOfYear+1).toString().padStart(2,'0')} ${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}:00`;
+                    if (dataType === 'load') defaultValue = 750;
+                    else if (dataType === 'pv') defaultValue = 1200;
+                    else if (dataType === 'price') defaultValue = 0.7;
+                }
+
+                csvContent += `${timestamp},${defaultValue}\n`;
+            }
+
+            // 创建下载链接
+            const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${typeNames[dataType]}数据模板_${config.name}_${config.points}点.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== 电价库功能 ====================
+        function onProvinceChange() {
+            const province = document.getElementById('province').value;
+            const userTypeSelect = document.getElementById('userType');
+            const voltageSelect = document.getElementById('voltageLevel');
+
+            // 清空后续选择
+            userTypeSelect.value = '';
+            voltageSelect.innerHTML = '<option value="">请选择电压等级</option>';
+
+            // 更新用电类型选项（根据省份可用类型）
+            if (province && ELECTRICITY_PRICE_DB[province]) {
+                const userTypes = ELECTRICITY_PRICE_DB[province].userTypes;
+                // 保持原有选项，但可以在这里动态更新
+            }
+
+            updatePricePreview();
+        }
+
+        function onUserTypeChange() {
+            const province = document.getElementById('province').value;
+            const userType = document.getElementById('userType').value;
+            const voltageSelect = document.getElementById('voltageLevel');
+
+            // 清空电压等级
+            voltageSelect.innerHTML = '<option value="">请选择电压等级</option>';
+
+            if (province && userType && ELECTRICITY_PRICE_DB[province]?.userTypes[userType]) {
+                const voltageLevels = ELECTRICITY_PRICE_DB[province].userTypes[userType].voltageLevels;
+                for (let level in voltageLevels) {
+                    const option = document.createElement('option');
+                    option.value = level;
+                    option.textContent = level;
+                    voltageSelect.appendChild(option);
+                }
+            }
+
+            updatePricePreview();
+        }
+
+        function updatePricePreview() {
+            const province = document.getElementById('province').value;
+            const userType = document.getElementById('userType').value;
+            const voltageLevel = document.getElementById('voltageLevel').value;
+            const previewDiv = document.getElementById('pricePreview');
+            const tableDiv = document.getElementById('priceTable');
+            const useBtn = document.getElementById('usePriceTemplateBtn');
+
+            if (province && userType && voltageLevel) {
+                const config = ELECTRICITY_PRICE_DB[province].userTypes[userType].voltageLevels[voltageLevel];
+                selectedPriceConfig = {
+                    province: ELECTRICITY_PRICE_DB[province].name,
+                    userType: ELECTRICITY_PRICE_DB[province].userTypes[userType].name,
+                    voltageLevel: voltageLevel,
+                    ...config,
+                    timeSlots: ELECTRICITY_PRICE_DB[province].userTypes[userType].timeSlots
+                };
+
+                // 显示电价表
+                let html = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+                    <tr style="background:#f0f0f0">
+                        <td style="padding:8px;border:1px solid #d9d9d9">时段类型</td>
+                        <td style="padding:8px;border:1px solid #d9d9d9">时间范围</td>
+                        <td style="padding:8px;border:1px solid #d9d9d9">电价(元/kWh)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px;border:1px solid #d9d9d9;color:#f5222d">🔴 高峰</td>
+                        <td style="padding:8px;border:1px solid #d9d9d9">${formatTimeSlots(selectedPriceConfig.timeSlots.peak)}</td>
+                        <td style="padding:8px;border:1px solid #d9d9d9;font-weight:bold">${config.energyPrice.peak}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px;border:1px solid #d9d9d9;color:#fa8c16">🟠 平段</td>
+                        <td style="padding:8px;border:1px solid #d9d9d9">${formatTimeSlots(selectedPriceConfig.timeSlots.high)}</td>
+                        <td style="padding:8px;border:1px solid #d9d9d9">${config.energyPrice.high}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px;border:1px solid #d9d9d9;color:#1890ff">🔵 低谷</td>
+                        <td style="padding:8px;border:1px solid #d9d9d9">${formatTimeSlots(selectedPriceConfig.timeSlots.valley)}</td>
+                        <td style="padding:8px;border:1px solid #d9d9d9;color:#52c41a">${config.energyPrice.valley}</td>
+                    </tr>
+                </table>`;
+
+                if (config.capacityPrice) {
+                    html += `<p style="margin-top:10px;color:#666">需量电价: <strong>${config.capacityPrice}</strong> 元/kW/月</p>`;
+                }
+
+                tableDiv.innerHTML = html;
+                previewDiv.style.display = 'block';
+                useBtn.disabled = false;
+            } else {
+                previewDiv.style.display = 'none';
+                useBtn.disabled = true;
+                selectedPriceConfig = null;
+            }
+        }
+
+        function formatTimeSlots(hours) {
+            if (!hours || hours.length === 0) return '-';
+            // 将连续的小时格式化为时间段
+            const ranges = [];
+            let start = hours[0];
+            let end = hours[0];
+            for (let i = 1; i < hours.length; i++) {
+                if (hours[i] === end + 1 || (end === 23 && hours[i] === 0)) {
+                    end = hours[i];
+                } else {
+                    ranges.push(`${start.toString().padStart(2,'0')}:00-${((end+1)%24).toString().padStart(2,'0')}:00`);
+                    start = hours[i];
+                    end = hours[i];
+                }
+            }
+            ranges.push(`${start.toString().padStart(2,'0')}:00-${((end+1)%24).toString().padStart(2,'0')}:00`);
+            return ranges.join(', ');
+        }
+
+        function usePriceTemplate() {
+            if (!selectedPriceConfig) {
+                alert('请先选择省份、用电类型和电压等级');
+                return;
+            }
+
+            // 生成电价数据
+            isUsingSystemPrice = true;
+            regeneratePriceData();
+
+            // 显示成功提示
+            alert(`✓ 已应用系统电价模板\n省份: ${selectedPriceConfig.province}\n用电类型: ${selectedPriceConfig.userType}\n电压等级: ${selectedPriceConfig.voltageLevel}\n\n高峰: ${selectedPriceConfig.energyPrice.peak} 元/kWh\n低谷: ${selectedPriceConfig.energyPrice.valley} 元/kWh`);
+        }
+
+        function getPriceForHour(hour, priceConfig) {
+            const { timeSlots, energyPrice } = priceConfig;
+            if (timeSlots.peak.includes(hour)) return energyPrice.peak;
+            if (timeSlots.high.includes(hour)) return energyPrice.high;
+            if (timeSlots.flat.includes(hour)) return energyPrice.flat;
+            if (timeSlots.valley.includes(hour)) return energyPrice.valley;
+            return energyPrice.flat;  // 默认平段
+        }
+
+        // ==================== 核心功能 ====================
+        function validateAndGenerateProfile() {
+            const config = TIME_GRANULARITY_CONFIG[currentGranularity];
+            currentData.load = [];
+            currentData.pv = [];
+
+            for (let i = 0; i < config.points; i++) {
+                currentData.load.push(parseFloat(document.getElementById(`load_${i}`)?.value || 0));
+                currentData.pv.push(parseFloat(document.getElementById(`pv_${i}`)?.value || 0));
+            }
+
+            // 如果没有使用系统电价，则从输入框读取
+            if (!isUsingSystemPrice || currentData.price.length === 0) {
+                currentData.price = [];
+                for (let i = 0; i < config.points; i++) {
+                    currentData.price.push(parseFloat(document.getElementById(`price_${i}`)?.value || 0.7));
+                }
+            }
+
+            const maxLoad = Math.max(...currentData.load);
+            const minPrice = Math.min(...currentData.price);
+            const maxPrice = Math.max(...currentData.price);
+            const priceSpread = maxPrice - minPrice;
+
+            let score = 75;
+            if (priceSpread >= 0.5) score += 15;
+            if (maxLoad > 500) score += 10;
+            if (score > 100) score = 100;
+
+            document.getElementById('adaptScore').textContent = score;
+
+            let conclusion = '';
+            if (score >= 80) conclusion = '用户储能适配性极佳，建议立即部署储能系统';
+            else if (score >= 60) conclusion = '用户储能适配性良好，建议结合实际情况评估投资';
+            else conclusion = '用户储能有一定适配性，需进一步分析经济性';
+            document.getElementById('conclusion').textContent = conclusion;
+
+            document.getElementById('profileResult').classList.remove('hidden');
+            document.getElementById('profileResult').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showStep2() {
+            document.getElementById('step2').classList.remove('hidden');
+            document.getElementById('step2').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function runOptimization() {
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('loading').scrollIntoView({ behavior: 'smooth' });
+
+            setTimeout(() => {
+                const capacity = parseFloat(document.getElementById('capacity').value) || 2000;
+                const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 1000;
+                const annualOMCost = getAnnualOMCost();
+                const systemLife = parseFloat(document.getElementById('systemLife').value) || 15;
+
+                const dailySavings = 967;
+                const savingsPercent = 25;
+                const investment = capacity * unitPrice;
+                const annualSavings = dailySavings * 365 - annualOMCost;
+                const payback = annualSavings > 0 ? (investment / annualSavings).toFixed(1) : '--';
+                const roi = annualSavings > 0 ? ((annualSavings * systemLife - investment) / investment * 100 / systemLife).toFixed(1) : '0';
+
+                document.getElementById('dailySavings').textContent = dailySavings + ' 元';
+                document.getElementById('savingsPercent').textContent = savingsPercent + '%';
+                document.getElementById('payback').textContent = payback + ' 年';
+                document.getElementById('roi').textContent = roi + '%';
+
+                // 生成优化前后对比数据
+                generateComparisonTable({
+                    maxDemand: { before: 850, after: 620, unit: 'kW' },
+                    energyCost: { before: 3868, after: 2901, unit: '元/日' },
+                    demandCost: { before: 34000, after: 24800, unit: '元/月' },
+                    totalCost: { before: 150082, after: 112336, unit: '元/年' },
+                    selfConsumption: { before: 65, after: 88, unit: '%' },
+                    gridImport: { before: 12400, after: 8900, unit: 'kWh/日' },
+                    peakShaving: { before: 0, after: 230, unit: 'kW' }
+                });
+
+                // 生成策略摘要
+                generateStrategySummary({
+                    chargeHours: '00:00-06:00, 13:00-15:00',
+                    dischargeHours: '09:00-12:00, 17:00-21:00',
+                    dailyCycles: 1.5,
+                    socRange: '15%-85%'
+                });
+
+                // 绘制运行曲线
+                drawOperationChart();
+
+                // 生成基本电费优化分析
+                generateBillingAnalysis();
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('report').classList.remove('hidden');
+                document.getElementById('report').scrollIntoView({ behavior: 'smooth' });
+            }, 1500);
+        }
+
+        // ==================== 诊断报告功能 ====================
+        function generateComparisonTable(data) {
+            const tbody = document.getElementById('comparisonTable');
+            if (!tbody) return;
+
+            const dimensions = {
+                maxDemand: '最大需量',
+                energyCost: '日电费支出',
+                demandCost: '月需量电费',
+                totalCost: '年度总电费',
+                selfConsumption: '自发自用率',
+                gridImport: '日电网购电',
+                peakShaving: '削峰能力'
+            };
+
+            let html = '';
+            for (let [key, label] of Object.entries(dimensions)) {
+                const item = data[key];
+                const change = item.after - item.before;
+                const changePercent = item.before !== 0 ? ((change / item.before) * 100).toFixed(1) : '0.0';
+                const isPositive = ['selfConsumption', 'peakShaving'].includes(key) ? change > 0 : change < 0;
+                const changeColor = isPositive ? '#52c41a' : '#f5222d';
+                const changeSymbol = change > 0 ? '↑' : '↓';
+
+                html += `
+                    <tr style="border-bottom:1px solid #f0f0f0">
+                        <td style="padding:12px;border:1px solid #e8e8e8;font-weight:500">${label}</td>
+                        <td style="padding:12px;border:1px solid #e8e8e8;text-align:center">${item.before} ${item.unit}</td>
+                        <td style="padding:12px;border:1px solid #e8e8e8;text-align:center;color:#1890ff;font-weight:bold">${item.after} ${item.unit}</td>
+                        <td style="padding:12px;border:1px solid #e8e8e8;text-align:center;color:${changeColor}">${changeSymbol} ${Math.abs(change).toFixed(0)} ${item.unit}</td>
+                        <td style="padding:12px;border:1px solid #e8e8e8;text-align:center;color:${changeColor}">${changeSymbol} ${Math.abs(changePercent)}%</td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+        }
+
+        function generateStrategySummary(data) {
+            const container = document.getElementById('strategySummary');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px">
+                    <div>
+                        <strong style="color:#1890ff">⚡ 充电时段：</strong>
+                        <span>${data.chargeHours}</span>
+                    </div>
+                    <div>
+                        <strong style="color:#52c41a">🔋 放电时段：</strong>
+                        <span>${data.dischargeHours}</span>
+                    </div>
+                    <div>
+                        <strong style="color:#722ed1">🔄 日循环次数：</strong>
+                        <span>${data.dailyCycles} 次</span>
+                    </div>
+                    <div>
+                        <strong style="color:#fa8c16">📊 SOC运行区间：</strong>
+                        <span>${data.socRange}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==================== 基本电费优化分析 ====================
+        function generateBillingAnalysis() {
+            // 获取用户输入
+            const transformerCapacity = parseFloat(document.getElementById('transformerCapacity')?.value) || 1000;
+            const billingMode = document.getElementById('billingMode')?.value || 'demand';
+            const maxDemand = parseFloat(document.getElementById('maxDemand')?.value) || 800;
+            const essPower = parseFloat(document.getElementById('power')?.value) || 500;
+
+            // 获取当前电价配置（优先使用系统电价，否则使用默认值）
+            const priceConfig = selectedPriceConfig || {
+                capacityPrice: 32,  // 默认容量电价 元/kVA/月
+                demandPrice: 48,    // 默认需量电价 元/kW/月
+                energyPrice: { peak: 1.0348, valley: 0.3351 }
+            };
+
+            // 显示基础信息
+            document.getElementById('reportTransformerCapacity').textContent = transformerCapacity;
+            document.getElementById('reportBillingMode').textContent = billingMode === 'demand' ? '按最大需量' : '按变压器容量';
+            document.getElementById('reportMaxDemand').textContent = maxDemand;
+
+            // 计算按容量计费
+            const capacityMonthlyCharge = transformerCapacity * priceConfig.capacityPrice;
+            const capacityAnnualCharge = capacityMonthlyCharge * 12;
+
+            document.getElementById('capacityMonthlyCharge').textContent = capacityMonthlyCharge.toLocaleString() + ' 元';
+            document.getElementById('capacityAnnualCharge').textContent = capacityAnnualCharge.toLocaleString() + ' 元';
+
+            // 计算按需量计费（优化前）
+            const demandMonthlyChargeBefore = maxDemand * priceConfig.demandPrice;
+            const demandAnnualChargeBefore = demandMonthlyChargeBefore * 12;
+
+            document.getElementById('demandMonthlyChargeBefore').textContent = demandMonthlyChargeBefore.toLocaleString() + ' 元';
+            document.getElementById('demandAnnualChargeBefore').textContent = demandAnnualChargeBefore.toLocaleString() + ' 元';
+
+            // 计算储能削峰后的优化效果
+            // 简化模型：储能可提供最大功率的70%进行削峰，效率80%
+            const peakShavingPower = Math.min(essPower * 0.7, maxDemand * 0.3);  // 最多削30%
+            const optimizedMaxDemand = Math.round(maxDemand - peakShavingPower * 0.8);
+            const demandMonthlyChargeAfter = optimizedMaxDemand * priceConfig.demandPrice;
+            const demandAnnualChargeAfter = demandMonthlyChargeAfter * 12;
+
+            document.getElementById('demandMonthlyChargeAfter').textContent = demandMonthlyChargeAfter.toLocaleString() + ' 元';
+            document.getElementById('demandAnnualChargeAfter').textContent = demandAnnualChargeAfter.toLocaleString() + ' 元';
+
+            // 显示优化效果
+            const demandReduction = maxDemand - optimizedMaxDemand;
+            const monthlySavings = demandMonthlyChargeBefore - demandMonthlyChargeAfter;
+            const annualSavings = monthlySavings * 12;
+
+            if (demandReduction > 0) {
+                document.getElementById('demandOptimizationResult').style.display = 'block';
+                document.getElementById('demandReduction').textContent = demandReduction;
+                document.getElementById('monthlySavings').textContent = monthlySavings.toLocaleString();
+                document.getElementById('annualSavings').textContent = annualSavings.toLocaleString();
+            } else {
+                document.getElementById('demandOptimizationResult').style.display = 'none';
+            }
+
+            // 生成建议
+            const adviceList = document.getElementById('billingAdviceList');
+            let adviceHtml = '';
+
+            if (billingMode === 'capacity') {
+                // 当前按容量计费
+                const savingsBySwitching = capacityAnnualCharge - demandAnnualChargeBefore;
+                if (savingsBySwitching > 5000) {
+                    adviceHtml += `<li style="color:#fa541c;font-weight:500">💡 重要发现：当前按容量计费年支出 ${capacityAnnualCharge.toLocaleString()} 元，若改为按需量计费可节省 ${savingsBySwitching.toLocaleString()} 元/年，建议变更计费方式</li>`;
+                } else if (savingsBySwitching > 0) {
+                    adviceHtml += `<li>按容量计费与按需量计费差距不大（年差 ${savingsBySwitching.toLocaleString()} 元），建议保持当前方式</li>`;
+                } else {
+                    adviceHtml += `<li>✓ 当前按容量计费更经济，年节省 ${Math.abs(savingsBySwitching).toLocaleString()} 元，建议保持</li>`;
+                }
+                adviceHtml += `<li>因按容量计费为固定成本，储能主要通过<strong>峰谷套利</strong>获取收益，需关注峰谷价差</li>`;
+            } else {
+                // 当前按需量计费
+                const savingsBySwitching = demandAnnualChargeBefore - capacityAnnualCharge;
+                if (savingsBySwitching > 5000) {
+                    adviceHtml += `<li style="color:#fa541c;font-weight:500">⚠️ 当前按需量计费年支出 ${demandAnnualChargeBefore.toLocaleString()} 元，若改为按容量计费可节省 ${savingsBySwitching.toLocaleString()} 元/年，强烈建议变更计费方式</li>`;
+                }
+
+                if (monthlySavings > 1000) {
+                    adviceHtml += `<li style="color:#52c41a;font-weight:500">✓ 储能削峰效果显著：最大需量从 ${maxDemand} kW 降至 ${optimizedMaxDemand} kW，月基本电费节省 ${monthlySavings.toLocaleString()} 元</li>`;
+                    adviceHtml += `<li>建议配置储能功率 ≥ ${essPower} kW，在负荷高峰时段（9:00-12:00, 14:00-19:00）进行削峰控制</li>`;
+                    adviceHtml += `<li>需量管理策略：设置储能放电阈值 ${optimizedMaxDemand} kW，当负荷超过阈值时自动放电</li>`;
+                } else if (monthlySavings > 0) {
+                    adviceHtml += `<li>储能削峰有一定效果：月基本电费可节省 ${monthlySavings.toLocaleString()} 元，建议结合实际投资成本评估</li>`;
+                } else {
+                    adviceHtml += `<li>当前负荷曲线较为平稳，储能削峰空间有限，建议重点关注<strong>峰谷套利</strong>收益</li>`;
+                }
+
+                // 对比两种计费方式
+                if (savingsBySwitching <= 5000 && savingsBySwitching > -5000) {
+                    adviceHtml += `<li>按容量 vs 按需量：两种方式年费用差距 ${Math.abs(savingsBySwitching).toLocaleString()} 元以内，可根据实际情况灵活选择</li>`;
+                }
+            }
+
+            // 通用建议
+            adviceHtml += `<li style="margin-top:10px;border-top:1px dashed #d9d9d9;padding-top:10px">参考电价：容量电价 ${priceConfig.capacityPrice} 元/kVA/月，需量电价 ${priceConfig.demandPrice} 元/kW/月</li>`;
+            adviceHtml += `<li>优化潜力：通过储能削峰，最大可降低需量 ${Math.round(maxDemand * 0.25)}-${Math.round(maxDemand * 0.35)} kW，年节省基本电费 ${Math.round(maxDemand * 0.3 * priceConfig.demandPrice * 12).toLocaleString()}-${Math.round(maxDemand * 0.35 * priceConfig.demandPrice * 12).toLocaleString()} 元</li>`;
+
+            adviceList.innerHTML = adviceHtml;
+
+            // 设置计费方式建议
+            const capacityAdvice = document.getElementById('capacityAdvice');
+            const demandAdvice = document.getElementById('demandAdvice');
+
+            if (capacityAnnualCharge < demandAnnualChargeBefore) {
+                capacityAdvice.innerHTML = '<span style="color:#52c41a">✓ 推荐</span>';
+                demandAdvice.innerHTML = '<span style="color:#999">备选方案</span>';
+            } else if (capacityAnnualCharge > demandAnnualChargeBefore) {
+                capacityAdvice.innerHTML = '<span style="color:#999">备选方案</span>';
+                demandAdvice.innerHTML = '<span style="color:#52c41a">✓ 推荐</span>';
+            } else {
+                capacityAdvice.innerHTML = '<span style="color:#666">相当</span>';
+                demandAdvice.innerHTML = '<span style="color:#666">相当</span>';
+            }
+        }
+
+        function drawOperationChart() {
+            const canvas = document.getElementById('operationChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // 清空画布
+            ctx.fillStyle = '#fafafa';
+            ctx.fillRect(0, 0, width, height);
+
+            // 绘制坐标轴
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(50, height - 50);
+            ctx.lineTo(width - 30, height - 50);
+            ctx.moveTo(50, height - 50);
+            ctx.lineTo(50, 30);
+            ctx.stroke();
+
+            // 绘制时间标签
+            ctx.fillStyle = '#666';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            for (let i = 0; i <= 24; i += 4) {
+                const x = 50 + (i / 24) * (width - 80);
+                ctx.fillText(i + 'h', x, height - 30);
+            }
+
+            // 绘制零线
+            ctx.strokeStyle = '#ddd';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(50, height / 2);
+            ctx.lineTo(width - 30, height / 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 模拟储能功率曲线（充电负/放电正）
+            const powerData = [];
+            for (let i = 0; i <= 96; i++) {
+                const hour = i / 4;
+                let power = 0;
+                if (hour >= 0 && hour < 6) power = -300;
+                else if (hour >= 9 && hour < 12) power = 450;
+                else if (hour >= 13 && hour < 15) power = -200;
+                else if (hour >= 17 && hour < 21) power = 400;
+                powerData.push(power);
+            }
+
+            // 绘制功率曲线
+            ctx.strokeStyle = '#1890ff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const maxPower = 500;
+            const scaleY = (height - 100) / (maxPower * 2);
+
+            for (let i = 0; i < powerData.length; i++) {
+                const x = 50 + (i / 96) * (width - 80);
+                const y = height / 2 - powerData[i] * scaleY;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // 填充充电区域
+            ctx.fillStyle = 'rgba(24, 144, 255, 0.2)';
+            ctx.beginPath();
+            for (let i = 0; i < powerData.length; i++) {
+                const x = 50 + (i / 96) * (width - 80);
+                const y = height / 2 - powerData[i] * scaleY;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.lineTo(50 + (powerData.length - 1) / 96 * (width - 80), height / 2);
+            ctx.lineTo(50, height / 2);
+            ctx.closePath();
+            ctx.fill();
+
+            // 绘制SOC曲线
+            const socData = [];
+            let soc = 0.5;
+            for (let i = 0; i <= 96; i++) {
+                const hour = i / 4;
+                if (hour >= 0 && hour < 6) soc += 0.005;
+                else if (hour >= 9 && hour < 12) soc -= 0.007;
+                else if (hour >= 13 && hour < 15) soc += 0.003;
+                else if (hour >= 17 && hour < 21) soc -= 0.006;
+                soc = Math.max(0.15, Math.min(0.85, soc));
+                socData.push(soc);
+            }
+
+            ctx.strokeStyle = '#52c41a';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < socData.length; i++) {
+                const x = 50 + (i / 96) * (width - 80);
+                const y = height - 50 - socData[i] * (height - 100);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            // 图例
+            ctx.fillStyle = '#1890ff';
+            ctx.fillRect(width - 200, 20, 20, 10);
+            ctx.fillStyle = '#666';
+            ctx.textAlign = 'left';
+            ctx.fillText('储能功率(充-/放+)', width - 175, 30);
+
+            ctx.fillStyle = '#52c41a';
+            ctx.fillRect(width - 200, 45, 20, 10);
+            ctx.fillStyle = '#666';
+            ctx.fillText('SOC', width - 175, 55);
+
+            // Y轴标签
+            ctx.fillStyle = '#666';
+            ctx.textAlign = 'right';
+            ctx.fillText('功率(kW)', 45, height / 2);
+            ctx.fillText('+' + maxPower, 45, height / 2 - maxPower * scaleY + 5);
+            ctx.fillText('-' + maxPower, 45, height / 2 + maxPower * scaleY + 5);
+        }
+
+        function reset() {
+            document.getElementById('report').classList.add('hidden');
+            document.getElementById('profileResult').classList.add('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step1').classList.remove('hidden');
+            document.getElementById('step1').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+
+    <!-- 算法公式说明区域 -->
+    <div id="formulaSection" class="container" style="margin-top: 30px;">
+        <div class="card">
+            <h2>📐 算法计算公式说明</h2>
+
+            <!-- 1. 用户画像适配度评分公式 -->
+            <div style="margin-bottom: 30px; padding: 20px; background: #f6ffed; border-radius: 8px; border: 1px solid #b7eb8f;">
+                <h3 style="color: #52c41a; margin-bottom: 15px;">1. 用户画像适配度评分</h3>
+                <div style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 4px; font-family: 'Consolas', monospace; overflow-x: auto;">
+                    <pre style="margin: 0; white-space: pre-wrap;">Score = Σ(w<sub>i</sub> × f<sub>i</sub>)
+
+其中：
+• w<sub>i</sub> - 第i个指标的权重系数
+• f<sub>i</sub> - 第i个指标的归一化得分
+• 指标包括：峰谷价差、负荷稳定性、光伏比例、储能配置合理性
+
+适配度等级：
+• 90-100分：非常适合
+• 70-89分：  适合
+• 50-69分：  一般
+• 0-49分：   不适合</pre>
+                </div>
+            </div>
+
+            <!-- 2. MILP优化目标函数 -->
+            <div style="margin-bottom: 30px; padding: 20px; background: #e6f7ff; border-radius: 8px; border: 1px solid #91d5ff;">
+                <h3 style="color: #1890ff; margin-bottom: 15px;">2. MILP优化目标函数</h3>
+                <div style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 4px; font-family: 'Consolas', monospace; overflow-x: auto;">
+                    <pre style="margin: 0; white-space: pre-wrap;">min C<sub>total</sub> = C<sub>energy</sub> + C<sub>demand</sub> + C<sub>om</sub>
+
+C<sub>energy</sub> = Σ<sub>t</sub> (E<sub>grid,t</sub> × Price<sub>t</sub>)          - 电量电费
+C<sub>demand</sub> = P<sub>max</sub> × DemandPrice × 12    - 需量电费
+C<sub>om</sub> = Σ<sub>t</sub> (|P<sub>ess,t</sub>| × OMRate)           - 运维成本
+
+其中：
+• E<sub>grid,t</sub> - t时段向电网购电量 (kWh)
+• Price<sub>t</sub> - t时段电价 (元/kWh)
+• P<sub>max</sub> - 月度最大需量 (kW)
+• DemandPrice - 需量电价 (元/kW/月)
+• P<sub>ess,t</sub> - t时段储能功率 (kW)</pre>
+                </div>
+            </div>
+
+            <!-- 3. 储能系统约束条件 -->
+            <div style="margin-bottom: 30px; padding: 20px; background: #f9f0ff; border-radius: 8px; border: 1px solid #d3adf7;">
+                <h3 style="color: #722ed1; margin-bottom: 15px;">3. 储能系统约束条件</h3>
+                <div style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 4px; font-family: 'Consolas', monospace; overflow-x: auto;">
+                    <pre style="margin: 0; white-space: pre-wrap;">SOC约束：
+SOC<sub>min</sub> ≤ SOC<sub>t</sub> ≤ SOC<sub>max</sub>
+SOC<sub>0</sub> = SOC<sub>T</sub> = SOC<sub>target</sub>
+
+功率约束：
+-P<sub>dis,max</sub> ≤ P<sub>ess,t</sub> ≤ P<sub>ch,max</sub>
+
+动态约束：
+SOC<sub>t+1</sub> = SOC<sub>t</sub> + (η<sub>ch</sub> × P<sub>ch,t</sub> × Δt - P<sub>dis,t</sub> × Δt / η<sub>dis</sub>) / E<sub>rated</sub>
+
+电量平衡：
+E<sub>load,t</sub> = E<sub>pv,t</sub> + E<sub>grid,t</sub> + E<sub>ess,t</sub>
+
+其中：
+• SOC<sub>t</sub> - t时段荷电状态
+• P<sub>ess,t</sub> - 储能充放电功率（负为充，正为放）
+• η<sub>ch</sub>/η<sub>dis</sub> - 充放电效率
+• E<sub>rated</sub> - 储能额定容量 (kWh)</pre>
+                </div>
+            </div>
+
+            <!-- 4. 防逆流约束 -->
+            <div style="margin-bottom: 30px; padding: 20px; background: #fff7e6; border-radius: 8px; border: 1px solid #ffd591;">
+                <h3 style="color: #fa8c16; margin-bottom: 15px;">4. 防逆流约束条件</h3>
+                <div style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 4px; font-family: 'Consolas', monospace; overflow-x: auto;">
+                    <pre style="margin: 0; white-space: pre-wrap;">光伏防逆流：
+P<sub>pv,t</sub> - P<sub>load,t</sub> + P<sub>ess,t</sub> ≤ P<sub>grid,max</sub> × (1 - y<sub>pv,t</sub>)
+其中 y<sub>pv,t</sub> ∈ {0,1} 为防逆流启用标志
+
+储能防逆流：
+当启用储能防逆流时：
+P<sub>ess,t</sub> ≥ -(P<sub>load,t</sub> - P<sub>pv,t</sub>) × y<sub>ess,t</sub>
+其中 y<sub>ess,t</sub> ∈ {0,1}
+
+净功率限制：
+P<sub>grid,t</sub> ≥ 0  （不允许向电网送电）</pre>
+                </div>
+            </div>
+
+            <!-- 5. 需量管理约束 -->
+            <div style="margin-bottom: 30px; padding: 20px; background: #fff1f0; border-radius: 8px; border: 1px solid #ffa39e;">
+                <h3 style="color: #f5222d; margin-bottom: 15px;">5. 需量管理约束</h3>
+                <div style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 4px; font-family: 'Consolas', monospace; overflow-x: auto;">
+                    <pre style="margin: 0; white-space: pre-wrap;">最大需量约束：
+P<sub>grid,t</sub> ≤ P<sub>contract</sub> × SafetyFactor
+
+储能放电支持：
+当 P<sub>load,t</sub> - P<sub>pv,t</sub> > P<sub>contract</sub> × 0.8 时：
+P<sub>ess,t</sub> ≥ P<sub>load,t</sub> - P<sub>pv,t</sub> - P<sub>contract</sub> × 0.8
+
+需量计算：
+P<sub>max</sub> = max(P<sub>grid,t</sub>)  滑动窗口15分钟平均</pre>
+                </div>
+            </div>
+
+            <!-- 6. 经济计算 -->
+            <div style="margin-bottom: 30px; padding: 20px; background: #e6fffb; border-radius: 8px; border: 1px solid #87e8de;">
+                <h3 style="color: #13c2c2; margin-bottom: 15px;">6. 经济计算模型</h3>
+                <div style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 4px; font-family: 'Consolas', monospace; overflow-x: auto;">
+                    <pre style="margin: 0; white-space: pre-wrap;">初始投资：
+Investment = P<sub>rated</sub> × UnitCost<sub>p</sub> + E<sub>rated</sub> × UnitCost<sub>e</sub>
+
+年收益：
+Revenue<sub>year</sub> = Σ<sub>t</sub> [(Price<sub>peak</sub> - Price<sub>valley</sub>) × E<sub>shift</sub> × Days]
+            + DemandSave × DemandPrice × 12
+            - C<sub>om,year</sub>
+
+回收期：
+Payback = Investment / Revenue<sub>year</sub>
+
+年收益率：
+ROI = Revenue<sub>year</sub> / Investment × 100%
+
+其中：
+• UnitCost<sub>p</sub> - 功率单价 (元/kW)
+• UnitCost<sub>e</sub> - 容量单价 (元/kWh)
+• E<sub>shift</sub> - 单周期移峰电量 (kWh)</pre>
+                </div>
+            </div>
+
+            <!-- 7. 时间粒度转换 -->
+            <div style="margin-bottom: 30px; padding: 20px; background: #f0f5ff; border-radius: 8px; border: 1px solid #adc6ff;">
+                <h3 style="color: #2f54eb; margin-bottom: 15px;">7. 时间粒度转换公式</h3>
+                <div style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 4px; font-family: 'Consolas', monospace; overflow-x: auto;">
+                    <pre style="margin: 0; white-space: pre-wrap;">日级数据（96点，15分钟）：
+Index<sub>15min</sub> = Hour × 4 + Minute / 15
+
+月级数据（2880点，15分钟）：
+Index<sub>15min</sub> = (Day × 24 + Hour) × 4 + Minute / 15
+= Day × 96 + Hour × 4 + Minute / 15
+
+年级数据（35040点，15分钟）：
+Index<sub>15min</sub> = (DayOfYear × 24 + Hour) × 4 + Minute / 15
+= DayOfYear × 96 + Hour × 4 + Minute / 15
+
+时间标签生成：
+日级：HH:MM (00:00 ~ 23:45)
+月级：D{d} HH:MM (D1 00:00 ~ D30 23:45)
+年级：Mon{d} HH:MM (Jan1 00:00 ~ Dec31 23:45)</pre>
+                </div>
+            </div>
+
+            <!-- 约束优先级 -->
+            <div style="padding: 20px; background: #fff0f6; border-radius: 8px; border: 1px solid #ffadd2;">
+                <h3 style="color: #eb2f96; margin-bottom: 15px;">8. 约束优先级（从高到低）</h3>
+                <div style="background: white; padding: 15px; border-radius: 4px;">
+                    <ol style="margin: 0; padding-left: 20px; line-height: 2;">
+                        <li><strong>硬性约束</strong> - SOC范围、功率限制（必须满足）</li>
+                        <li><strong>防逆流</strong> - 光伏/储能防逆流（优先级高）</li>
+                        <li><strong>过载保护</strong> - 变压器容量限制（优先级高）</li>
+                        <li><strong>需量管理</strong> - 契约需量控制（优先级中）</li>
+                        <li><strong>峰谷套利</strong> - 电价差收益（优先级低）</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
