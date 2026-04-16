@@ -208,6 +208,95 @@
             margin: 0 auto 20px;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* 打印样式 */
+        @media print {
+            body { background: white; }
+            .header { display: none; }
+            .container { padding: 0; max-width: 100%; }
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                margin-bottom: 15px;
+                break-inside: avoid;
+            }
+            #step1, #step2, #loading { display: none !important; }
+            #report { display: block !important; }
+            .btn { display: none; }
+            .tabs { display: none; }
+            .tab-content { display: none; }
+            .result-cards {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
+            .result-card {
+                border: 1px solid #ddd;
+                padding: 15px 10px;
+            }
+            canvas {
+                max-width: 100%;
+                height: auto;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 8px;
+            }
+            .print-header {
+                text-align: center;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+                border-bottom: 2px solid #1890ff;
+            }
+            .print-header h1 {
+                color: #1890ff;
+                font-size: 24px;
+                margin-bottom: 5px;
+            }
+            .print-header p {
+                color: #666;
+                font-size: 14px;
+            }
+            .print-footer {
+                margin-top: 30px;
+                padding-top: 15px;
+                border-top: 1px solid #ddd;
+                text-align: center;
+                font-size: 12px;
+                color: #999;
+            }
+            .print-info-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            .print-info-item {
+                padding: 8px;
+                background: #f5f5f5;
+                border-radius: 4px;
+            }
+            .print-info-label {
+                font-size: 11px;
+                color: #666;
+            }
+            .print-info-value {
+                font-size: 14px;
+                font-weight: bold;
+                color: #333;
+            }
+        }
+
+        /* 打印按钮样式 */
+        .print-btn {
+            background: #52c41a;
+            margin-left: 10px;
+        }
+        .print-btn:hover {
+            background: #73d13d;
+        }
     </style>
 </head>
 <body>
@@ -220,6 +309,63 @@
         <!-- 步骤1：基础信息采集 -->
         <div class="card" id="step1">
             <h2>步骤一：基础信息采集</h2>
+
+            <!-- 基础信息（共用） -->
+            <div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;padding:20px;margin-bottom:24px">
+                <h3 style="margin:0 0 20px;color:#52c41a">📋 基础信息（必填）</h3>
+                <p style="color:#666;font-size:13px;margin-bottom:15px">无论选择手动输入还是文件上传，都需要填写以下基础参数</p>
+
+                <!-- 储能参数 -->
+                <h4 style="margin:15px 0 10px;color:#333;font-size:14px">储能系统参数</h4>
+                <div class="form-row">
+                    <div class="form-item">
+                        <label>额定容量 (kWh)</label>
+                        <input type="number" id="capacity" value="2000" min="100">
+                    </div>
+                    <div class="form-item">
+                        <label>额定功率 (kW)</label>
+                        <input type="number" id="power" value="500" min="50">
+                    </div>
+                    <div class="form-item">
+                        <label>储能投资金额 (万元)</label>
+                        <input type="number" id="essInvestment" value="150" min="10" placeholder="请输入储能投资金额">
+                    </div>
+                </div>
+
+                <!-- 光伏参数 -->
+                <h4 style="margin:15px 0 10px;color:#333;font-size:14px">光伏系统参数</h4>
+                <div class="form-row">
+                    <div class="form-item">
+                        <label>光伏装机容量 (kW)</label>
+                        <input type="number" id="pvCapacity" value="300" min="0" placeholder="请输入光伏装机容量">
+                    </div>
+                </div>
+
+                <!-- 变压器与基本电费参数 -->
+                <h4 style="margin:15px 0 10px;color:#333;font-size:14px">⚡ 变压器与基本电费信息</h4>
+                <div class="form-row">
+                    <div class="form-item">
+                        <label>变压器总容量 (kVA) <span style="color:#f5222d">*</span></label>
+                        <input type="number" id="transformerCapacity" value="1000" min="50" placeholder="请输入变压器容量">
+                        <small style="color:#666;font-size:11px">用于计算按容量计费的基本电费</small>
+                    </div>
+                    <div class="form-item">
+                        <label>当前计费方式</label>
+                        <select id="billingMode" onchange="onBillingModeChange()" style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:4px">
+                            <option value="capacity">按变压器容量</option>
+                            <option value="demand" selected>按实际最大需量</option>
+                        </select>
+                    </div>
+                    <div class="form-item" id="maxDemandItem">
+                        <label>历史月最大需量 (kW)</label>
+                        <input type="number" id="maxDemand" value="800" min="50" placeholder="请输入最大需量">
+                        <small style="color:#666;font-size:11px">储能优化可降低此值，节省基本电费</small>
+                    </div>
+                </div>
+                <div id="billingHint" style="margin-top:10px;padding:10px;background:#e6f7ff;border-radius:4px;font-size:13px;color:#096dd9">
+                    💡 <strong>按需量计费</strong>：储能可在负荷高峰时放电，降低最大需量，节省基本电费
+                </div>
+            </div>
 
             <!-- 时间粒度选择 -->
             <div class="granularity-selector">
@@ -263,59 +409,6 @@
             <div id="manualInput" class="tab-content active">
                 <div class="alert" id="manualAlert">
                     💡 手动输入典型日24小时功率数据（15分钟粒度，共96个数据点）
-                </div>
-
-                <!-- 储能参数 -->
-                <h3 style="margin:20px 0 15px;color:#333">储能系统参数</h3>
-                <div class="form-row">
-                    <div class="form-item">
-                        <label>额定容量 (kWh)</label>
-                        <input type="number" id="capacity" value="2000" min="100">
-                    </div>
-                    <div class="form-item">
-                        <label>额定功率 (kW)</label>
-                        <input type="number" id="power" value="500" min="50">
-                    </div>
-                    <div class="form-item">
-                        <label>储能投资金额 (万元)</label>
-                        <input type="number" id="essInvestment" value="150" min="10" placeholder="请输入储能投资金额">
-                    </div>
-                </div>
-
-                <!-- 光伏参数 -->
-                <h3 style="margin:20px 0 15px;color:#333">光伏系统参数</h3>
-                <div class="form-row">
-                    <div class="form-item">
-                        <label>光伏装机容量 (kW)</label>
-                        <input type="number" id="pvCapacity" value="300" min="0" placeholder="请输入光伏装机容量">
-                    </div>
-                </div>
-
-                <!-- 变压器与基本电费参数 -->
-                <h3 style="margin:20px 0 15px;color:#333">⚡ 变压器与基本电费信息</h3>
-                <div style="background:#f0f5ff;border:1px solid #adc6ff;border-radius:8px;padding:20px;margin-bottom:20px">
-                    <div class="form-row">
-                        <div class="form-item">
-                            <label>变压器总容量 (kVA) <span style="color:#f5222d">*</span></label>
-                            <input type="number" id="transformerCapacity" value="1000" min="50" placeholder="请输入变压器容量">
-                            <small style="color:#666;font-size:11px">用于计算按容量计费的基本电费</small>
-                        </div>
-                        <div class="form-item">
-                            <label>当前计费方式</label>
-                            <select id="billingMode" onchange="onBillingModeChange()" style="width:100%;padding:10px;border:1px solid #d9d9d9;border-radius:4px">
-                                <option value="capacity">按变压器容量</option>
-                                <option value="demand" selected>按实际最大需量</option>
-                            </select>
-                        </div>
-                        <div class="form-item" id="maxDemandItem">
-                            <label>历史月最大需量 (kW)</label>
-                            <input type="number" id="maxDemand" value="800" min="50" placeholder="请输入最大需量">
-                            <small style="color:#666;font-size:11px">储能优化可降低此值，节省基本电费</small>
-                        </div>
-                    </div>
-                    <div id="billingHint" style="margin-top:10px;padding:10px;background:#e6f7ff;border-radius:4px;font-size:13px;color:#096dd9">
-                        💡 <strong>按需量计费</strong>：储能可在负荷高峰时放电，降低最大需量，节省基本电费
-                    </div>
                 </div>
 
                 <!-- 负荷数据 -->
@@ -669,7 +762,77 @@
 
         <!-- 诊断报告 -->
         <div class="card hidden" id="report">
-            <h2>策略诊断报告</h2>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                <h2>策略诊断报告</h2>
+                <button class="btn btn-success print-btn" onclick="printReport()">🖨️ 打印报告</button>
+            </div>
+
+            <!-- 打印页眉 -->
+            <div class="print-header" style="display:none">
+                <h1>储能策略诊断报告</h1>
+                <p>基于MILP算法的智能储能运行策略优化分析</p>
+                <p>生成时间：<span id="printDate"></span></p>
+            </div>
+
+            <!-- 打印基本信息 -->
+            <div class="print-only" style="display:none">
+                <h3 style="margin:20px 0 15px;color:#1890ff;border-bottom:2px solid #1890ff;padding-bottom:10px">📋 基本信息</h3>
+                <div class="print-info-grid">
+                    <div class="print-info-item">
+                        <div class="print-info-label">储能容量</div>
+                        <div class="print-info-value" id="printCapacity">--</div>
+                    </div>
+                    <div class="print-info-item">
+                        <div class="print-info-label">储能功率</div>
+                        <div class="print-info-value" id="printPower">--</div>
+                    </div>
+                    <div class="print-info-item">
+                        <div class="print-info-label">光伏装机</div>
+                        <div class="print-info-value" id="printPVCapacity">--</div>
+                    </div>
+                    <div class="print-info-item">
+                        <div class="print-info-label">变压器容量</div>
+                        <div class="print-info-value" id="printTransformerCap">--</div>
+                    </div>
+                    <div class="print-info-item">
+                        <div class="print-info-label">计费方式</div>
+                        <div class="print-info-value" id="printBillingMode">--</div>
+                    </div>
+                    <div class="print-info-item">
+                        <div class="print-info-label">投资金额</div>
+                        <div class="print-info-value" id="printInvestment">--</div>
+                    </div>
+                </div>
+
+                <h3 style="margin:20px 0 15px;color:#1890ff;border-bottom:2px solid #1890ff;padding-bottom:10px">⚙️ 策略配置</h3>
+                <div class="print-info-grid">
+                    <div class="print-info-item">
+                        <div class="print-info-label">SOC范围</div>
+                        <div class="print-info-value" id="printSOC">--</div>
+                    </div>
+                    <div class="print-info-item">
+                        <div class="print-info-label">充放电效率</div>
+                        <div class="print-info-value" id="printEfficiency">--</div>
+                    </div>
+                    <div class="print-info-item">
+                        <div class="print-info-label">需量管理</div>
+                        <div class="print-info-value" id="printDemandManage">--</div>
+                    </div>
+                    <div class="print-info-item">
+                        <div class="print-info-label">系统寿命</div>
+                        <div class="print-info-value" id="printSystemLife">--</div>
+                    </div>
+                    <div class="print-info-item">
+                        <div class="print-info-label">年运维费</div>
+                        <div class="print-info-value" id="printOMCost">--</div>
+                    </div>
+                    <div class="print-info-item">
+                        <div class="print-info-label">数据粒度</div>
+                        <div class="print-info-value" id="printGranularity">--</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="result-cards">
                 <div class="result-card">
                     <div class="result-value" id="dailySavings">0 元</div>
@@ -1114,7 +1277,157 @@
             initInputs();
             updateOMCalc();
             onBillingModeChange();  // 初始化计费方式显示
+            parseUrlParams();       // 解析URL参数并预填充
         });
+
+        // ==================== URL参数解析 ====================
+        function parseUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // 基础信息参数映射
+            const paramMapping = {
+                // 储能参数
+                'cap': 'capacity',
+                'pwr': 'power',
+                'inv': 'essInvestment',
+                // 光伏参数
+                'pv': 'pvCapacity',
+                // 变压器与计费
+                'trans': 'transformerCapacity',
+                'bill': 'billingMode',
+                'demand': 'maxDemand',
+                // 策略参数
+                'socmin': 'socMin',
+                'socmax': 'socMax',
+                'eff': 'efficiency',
+                'life': 'systemLife',
+                // 经济性参数
+                'price': 'unitPrice',
+                'residual': 'residualRate'
+            };
+
+            let filledCount = 0;
+            const filledFields = [];
+
+            // 遍历参数映射，填充表单
+            for (const [param, elementId] of Object.entries(paramMapping)) {
+                const value = urlParams.get(param);
+                if (value !== null) {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.value = value;
+                        filledCount++;
+                        filledFields.push(elementId);
+                    }
+                }
+            }
+
+            // 处理省份选择
+            const province = urlParams.get('prov');
+            if (province && ELECTRICITY_PRICE_DB[province]) {
+                document.getElementById('provinceSelect').value = province;
+                onProvinceChange();
+
+                // 处理用电类型
+                const userType = urlParams.get('utype');
+                if (userType) {
+                    setTimeout(() => {
+                        const userTypeSelect = document.getElementById('userTypeSelect');
+                        if (userTypeSelect) {
+                            userTypeSelect.value = userType;
+                            onUserTypeChange();
+
+                            // 处理电压等级
+                            const voltage = urlParams.get('volt');
+                            if (voltage) {
+                                setTimeout(() => {
+                                    const voltageSelect = document.getElementById('voltageSelect');
+                                    if (voltageSelect) {
+                                        voltageSelect.value = voltage;
+                                    }
+                                }, 100);
+                            }
+                        }
+                    }, 100);
+                }
+            }
+
+            // 触发相关更新函数
+            if (filledFields.includes('billingMode')) {
+                onBillingModeChange();
+            }
+            if (filledFields.includes('capacity') || filledFields.includes('unitPrice')) {
+                updateOMCalc();
+            }
+
+            // 如果有预填充参数，显示提示
+            if (filledCount > 0 || province) {
+                showUrlParamsNotification(filledCount, province);
+            }
+        }
+
+        // 显示URL参数预填充提示
+        function showUrlParamsNotification(filledCount, province) {
+            const notification = document.createElement('div');
+            notification.id = 'urlParamsNotification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #52c41a, #73d13d);
+                color: white;
+                padding: 16px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                max-width: 350px;
+                animation: slideIn 0.3s ease-out;
+            `;
+
+            let content = `<div style="font-weight:bold;margin-bottom:8px">✅ 配置已自动填充</div>`;
+            content += `<div style="font-size:13px;line-height:1.5">`;
+            if (province) {
+                content += `• 省份：${ELECTRICITY_PRICE_DB[province]?.name || province}<br>`;
+            }
+            if (filledCount > 0) {
+                content += `• 已填充 ${filledCount} 个参数<br>`;
+            }
+            content += `</div>`;
+            content += `<div style="margin-top:10px;text-align:right">
+                <button onclick="dismissNotification()" style="background:rgba(255,255,255,0.2);border:none;color:white;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px">知道了</button>
+            </div>`;
+
+            notification.innerHTML = content;
+            document.body.appendChild(notification);
+
+            // 5秒后自动消失
+            setTimeout(() => {
+                dismissNotification();
+            }, 5000);
+        }
+
+        // 关闭通知
+        function dismissNotification() {
+            const notification = document.getElementById('urlParamsNotification');
+            if (notification) {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }
+
+        // 添加动画样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
 
         function initInputs() {
             createInputGrid('loadInputs', 'load', currentGranularity);
@@ -2126,6 +2439,60 @@
             document.getElementById('step2').classList.add('hidden');
             document.getElementById('step1').classList.remove('hidden');
             document.getElementById('step1').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 打印报告功能
+        function printReport() {
+            // 填充打印信息
+            const now = new Date();
+            document.getElementById('printDate').textContent = now.toLocaleString('zh-CN');
+
+            // 基本信息
+            document.getElementById('printCapacity').textContent = document.getElementById('capacity').value + ' kWh';
+            document.getElementById('printPower').textContent = document.getElementById('power').value + ' kW';
+            document.getElementById('printPVCapacity').textContent = document.getElementById('pvCapacity').value + ' kW';
+            document.getElementById('printTransformerCap').textContent = document.getElementById('transformerCapacity').value + ' kVA';
+            document.getElementById('printBillingMode').textContent =
+                document.getElementById('billingMode').value === 'capacity' ? '按变压器容量' : '按实际最大需量';
+            document.getElementById('printInvestment').textContent = document.getElementById('essInvestment').value + ' 万元';
+
+            // 策略配置
+            const socMin = document.getElementById('socMin').value;
+            const socMax = document.getElementById('socMax').value;
+            document.getElementById('printSOC').textContent = socMin + ' - ' + socMax;
+            document.getElementById('printEfficiency').textContent = (document.getElementById('efficiency').value * 100).toFixed(0) + '%';
+            document.getElementById('printDemandManage').textContent =
+                document.getElementById('enableDemandManage').checked ? '启用' : '未启用';
+            document.getElementById('printSystemLife').textContent = document.getElementById('systemLife').value + ' 年';
+            document.getElementById('printOMCost').textContent = document.getElementById('omTotalResult').textContent;
+
+            const granularity = document.querySelector('input[name="timeGranularity"]:checked').value;
+            const granularityText = {
+                'daily': '日级(15分钟)',
+                'monthly': '月级(15分钟)',
+                'yearly': '年级(15分钟)'
+            };
+            document.getElementById('printGranularity').textContent = granularityText[granularity] || granularity;
+
+            // 显示打印专用内容
+            const printOnlyElements = document.querySelectorAll('.print-only');
+            printOnlyElements.forEach(el => {
+                el.style.display = 'block';
+            });
+            document.querySelector('.print-header').style.display = 'block';
+
+            // 延迟打印，确保内容渲染完成
+            setTimeout(() => {
+                window.print();
+
+                // 打印完成后隐藏打印专用内容
+                setTimeout(() => {
+                    printOnlyElements.forEach(el => {
+                        el.style.display = 'none';
+                    });
+                    document.querySelector('.print-header').style.display = 'none';
+                }, 1000);
+            }, 300);
         }
     </script>
 
