@@ -1,16 +1,72 @@
 {
-  "name": "energy-diagnostic-tool",
-  "version": 2,
-  "builds": [
+  "skill_name": "energy-diagnostic",
+  "version": "2.0.0",
+  "evals": [
     {
-      "src": "index.html",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
+      "id": 1,
+      "eval_name": "basic-trigger",
+      "prompt": "帮我做一个储能诊断分析，我在广东省，是大工业用电，变压器容量1000kVA",
+      "expected_output": "应该触发储能诊断流程，询问使用模式选择（Web工具/对话引导）"
+    },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "id": 2,
+      "eval_name": "keyword-trigger",
+      "prompt": "我想了解储能投资策略，分析一下经济性",
+      "expected_output": "应该识别关键词并触发储能诊断助手，显示功能介绍和模式选择"
+    },
+    {
+      "id": 3,
+      "eval_name": "web-mode-selection",
+      "prompt": "/储能诊断，选择Web工具模式",
+      "expected_output": "应该提供Web工具访问链接和使用说明"
+    },
+    {
+      "id": 4,
+      "eval_name": "dialog-mode-flow",
+      "prompt": "/储能诊断，选择对话引导模式，然后依次提供：广东、大工业用电、1000kVA、按需计费、2000kWh、500kW、150万元、300kW",
+      "expected_output": "应该引导用户一步步输入参数，最后生成带预填参数的Web工具链接"
+    },
+    {
+      "id": 5,
+      "eval_name": "url-params-generation",
+      "prompt": "我在广东，大工业用电，储能2000kWh，功率500kW，投资150万，帮我生成诊断链接",
+      "expected_output": "应该生成带预填参数的URL，如prov=guangdong&cap=2000&pwr=500&inv=150"
+    },
+    {
+      "id": 6,
+      "eval_name": "demand-management-inquiry",
+      "prompt": "什么是需量管理？",
+      "expected_output": "应该解释需量管理的概念、两部制电价原理和储能削峰的收益计算"
+    },
+    {
+      "id": 7,
+      "eval_name": "two-part-tariff-optimization",
+      "prompt": "按容量计费和按需量计费哪个更划算？",
+      "expected_output": "应该解释两种计费方式的区别，说明储能对按需量计费的优化效果"
+    },
+    {
+      "id": 8,
+      "eval_name": "time-granularity-selection",
+      "prompt": "Web工具里怎么选择数据时间粒度？",
+      "expected_output": "应该说明支持日级(96点)、月级(2880点)、年级(35040点)三种粒度"
+    },
+    {
+      "id": 9,
+      "eval_name": "print-report-feature",
+      "prompt": "怎么导出PDF报告？",
+      "expected_output": "应该说明点击打印报告按钮，浏览器选择另存为PDF即可"
+    },
+    {
+      "id": 10,
+      "eval_name": "province-price-library",
+      "prompt": "支持哪些省份的电价？",
+      "expected_output": "应该列出广东、江苏、浙江、山东、河南五个省份"
+    },
+    {
+      "id": 11,
+      "eval_name": "should-not-trigger",
+      "prompt": "帮我写一个简单的Python脚本，计算两个数的和",
+      "expected_output": "不应该触发储能诊断技能"
     }
   ]
 }
